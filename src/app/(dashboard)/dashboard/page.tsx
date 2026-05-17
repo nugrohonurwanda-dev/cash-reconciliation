@@ -1,0 +1,498 @@
+//src/app/(dashboard)/dashboard/page.tsx
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { Role } from "@prisma/client";
+import { calculateReconciliation } from "@/lib/calculations";
+import Link from "next/link";
+import {
+  formatRupiahDisplay,
+  STATUS_LABEL,
+  SHIFT_PERIOD_LABEL,
+} from "@/utils/format";
+
+function StatCard({
+  label,
+  value,
+  color = "text-slate-900",
+  sub,
+}: {
+  label: string;
+  value: string | number;
+  color?: string;
+  sub?: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-5">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
+      {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+    </div>
+  );
+}
+
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
+  if (!session) redirect("/login");
+
+  const role = session.user.role;
+  const userId = session.user.id;
+
+  // ── CASHIER ───────────────────────────────────────────────────────────────
+  if (role === Role.CASHIER) {
+    const shifts = await prisma.shiftReport.findMany({
+      where: { opened_by: userId },
+      orderBy: { opened_at: "desc" },
+      take: 5,
+      include: { transaction_lines: true },
+    });
+
+    const activeShift = shifts.find(
+      (s) =>
+        s.status === "OPEN" ||
+        s.status === "PENDING" ||
+        s.status === "PENDING_FINANCE",
+    );
+
+    const totalShift = await prisma.shiftReport.count({
+      where: { opened_by: userId },
+    });
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Selamat datang,
+            <span className="font-medium text-slate-700">
+              {session.user.name}
+            </span>
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            label="Shift Aktif"
+            value={
+              activeShift
+                ? STATUS_LABEL[activeShift.status]?.label
+                : "Tidak ada"
+            }
+            color={activeShift ? "text-emerald-600" : "text-slate-400"}
+          />
+          <StatCard label="Total Shift" value={totalShift} />
+          <StatCard
+            label="Status Terakhir"
+            value={shifts[0] ? STATUS_LABEL[shifts[0].status]?.label : "-"}
+            color="text-slate-600"
+          />
+        </div>
+
+        {activeShift ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-900">
+                Shift sedang berjalan
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Dibuka
+                {new Date(activeShift.opened_at).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+            <Link
+              href={`/shifts/${activeShift.id}`}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+            >
+              Lanjutkan →
+            </Link>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
+            <p className="text-slate-500 text-sm mb-4">Belum ada shift aktif</p>
+            <Link
+              href="/shifts/new"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Buka Shift Baru
+            </Link>
+          </div>
+        )}
+
+        {/* Riwayat shift */}
+        {shifts.length > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Shift Terakhir
+              </h2>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Tanggal
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Shift
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Status
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {shifts.map((shift) => (
+                  <tr
+                    key={shift.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 text-slate-700">
+                      {new Date(shift.shift_date).toLocaleDateString("id-ID", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                      >
+                        {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
+                          shift.shift_period}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_LABEL[shift.status]?.color}`}
+                      >
+                        {STATUS_LABEL[shift.status]?.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/shifts/${shift.id}`}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Detail →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── HEAD CASHIER ──────────────────────────────────────────────────────────
+  if (role === Role.HEAD_CASHIER) {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [pendingCount, todayShifts, approvedToday] =
+      await prisma.$transaction([
+        prisma.shiftReport.count({ where: { status: "PENDING" } }),
+        prisma.shiftReport.count({
+          where: { shift_date: { gte: todayStart } },
+        }),
+        prisma.shiftReport.count({
+          where: {
+            status: "PENDING_FINANCE",
+            approvals: {
+              some: {
+                action: "APPROVE",
+                approver_id: userId,
+                timestamp: { gte: todayStart },
+              },
+            },
+          },
+        }),
+      ]);
+
+    const recentPending = await prisma.shiftReport.findMany({
+      where: { status: "PENDING" },
+      include: { opener: { select: { full_name: true } } },
+      orderBy: { opened_at: "desc" },
+      take: 5,
+    });
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Selamat datang,
+            <span className="font-medium text-slate-700">
+              {session.user.name}
+            </span>
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            label="Menunggu Review"
+            value={pendingCount}
+            color={pendingCount > 0 ? "text-amber-600" : "text-slate-400"}
+          />
+          <StatCard label="Shift Hari Ini" value={todayShifts} />
+          <StatCard
+            label="Disetujui Hari Ini"
+            value={approvedToday}
+            color="text-emerald-600"
+          />
+        </div>
+
+        {recentPending.length > 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Perlu Direview
+              </h2>
+              <Link
+                href="/review"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Lihat semua →
+              </Link>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Kasir
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Shift
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Tanggal
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentPending.map((shift) => (
+                  <tr
+                    key={shift.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      {shift.opener.full_name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                      >
+                        {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
+                          shift.shift_period}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {new Date(shift.shift_date).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href="/review"
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Review →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
+            <p className="text-slate-400 text-sm">
+              Tidak ada laporan yang menunggu review
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── FINANCE ───────────────────────────────────────────────────────────────
+  if (role === Role.FINANCE) {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [pendingFinanceCount, closedToday] = await prisma.$transaction([
+      prisma.shiftReport.count({ where: { status: "PENDING_FINANCE" } }),
+      prisma.shiftReport.count({
+        where: { status: "CLOSED", closed_at: { gte: todayStart } },
+      }),
+    ]);
+
+    const closedShifts = await prisma.shiftReport.findMany({
+      where: { status: "CLOSED" },
+      include: { transaction_lines: true },
+    });
+
+    let totalCash = 0;
+    let totalBank = 0;
+
+    for (const shift of closedShifts) {
+      const recon = calculateReconciliation(shift.transaction_lines);
+      for (const r of recon.per_kategori) {
+        if (r.kategori === "CASH") {
+          totalCash += parseFloat(r.fisik.toString());
+        } else {
+          totalBank += parseFloat(r.fisik.toString());
+        }
+      }
+    }
+
+    const recentPendingFinance = await prisma.shiftReport.findMany({
+      where: { status: "PENDING_FINANCE" },
+      include: { opener: { select: { full_name: true } } },
+      orderBy: { opened_at: "desc" },
+      take: 5,
+    });
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            Selamat datang
+            <span className="font-medium text-slate-700">
+              {session.user.name}
+            </span>
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard
+            label="Menunggu Finalisasi"
+            value={pendingFinanceCount}
+            color={
+              pendingFinanceCount > 0 ? "text-amber-600" : "text-slate-400"
+            }
+          />
+          <StatCard
+            label="Ditutup Hari Ini"
+            value={closedToday}
+            color="text-emerald-600"
+          />
+          <StatCard
+            label="Total Omzet Cash"
+            value={formatRupiahDisplay(totalCash)}
+            color="text-slate-900"
+          />
+          <StatCard
+            label="Total Omzet Bank"
+            value={formatRupiahDisplay(totalBank)}
+            color="text-blue-600"
+          />
+        </div>
+
+        {recentPendingFinance.length > 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Perlu Difinalisasi
+              </h2>
+              <Link
+                href="/finance"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Lihat semua →
+              </Link>
+            </div>
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Kasir
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Shift
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Tanggal
+                  </th>
+                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentPendingFinance.map((shift) => (
+                  <tr
+                    key={shift.id}
+                    className="border-t border-slate-100 hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      {shift.opener.full_name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                      >
+                        {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
+                          shift.shift_period}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {new Date(shift.shift_date).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link
+                        href={`/shifts/${shift.id}`}
+                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                      >
+                        Detail →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
+            <p className="text-slate-400 text-sm">
+              Tidak ada laporan yang menunggu finalisasi
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+}

@@ -1,0 +1,347 @@
+// src/components/shifts/SpecialLogsPanel.tsx
+"use client";
+
+import { SpecialLog } from "@/types/shift";
+import { formatRupiah } from "@/utils/format";
+
+type SpecialLogsPanelProps = {
+  voidDiscountLogs: SpecialLog[];
+  depositLogs: SpecialLog[];
+  otherCostLogs: SpecialLog[];
+  setVoidDiscountLogs: React.Dispatch<React.SetStateAction<SpecialLog[]>>;
+  setDepositLogs: React.Dispatch<React.SetStateAction<SpecialLog[]>>;
+  setOtherCostLogs: React.Dispatch<React.SetStateAction<SpecialLog[]>>;
+  saveSpecialLogs: () => void;
+  saving: boolean;
+  onBack: () => void;
+};
+
+function InputRupiah({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+        Rp
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(formatRupiah(e.target.value))}
+        placeholder="0"
+        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+      />
+    </div>
+  );
+}
+
+export default function SpecialLogsPanel({
+  voidDiscountLogs,
+  depositLogs,
+  otherCostLogs,
+  setVoidDiscountLogs,
+  setDepositLogs,
+  setOtherCostLogs,
+  saveSpecialLogs,
+  saving,
+  onBack,
+}: SpecialLogsPanelProps) {
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-slate-500">Semua bagian bersifat opsional</p>
+
+      {/* Void & Discount */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">
+            Void & Discount
+          </h3>
+          <button
+            onClick={() =>
+              setVoidDiscountLogs((prev) => [
+                ...prev,
+                {
+                  tipe: "VOID",
+                  nominal: "",
+                  nomor_bill: "",
+                  alasan: "",
+                },
+              ])
+            }
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          >
+            + Tambah
+          </button>
+        </div>
+        {voidDiscountLogs.length === 0 && (
+          <p className="text-xs text-slate-400 italic">
+            Tidak ada void/discount
+          </p>
+        )}
+        {voidDiscountLogs.map((log, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-4 gap-2 p-3 bg-slate-50 rounded-lg"
+          >
+            <select
+              value={log.tipe}
+              onChange={(e) =>
+                setVoidDiscountLogs((prev) =>
+                  prev.map((l, idx) =>
+                    idx === i
+                      ? {
+                          ...l,
+                          tipe: e.target.value as "VOID" | "DISCOUNT",
+                        }
+                      : l,
+                  ),
+                )
+              }
+              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="VOID">Void</option>
+              <option value="DISCOUNT">Discount</option>
+            </select>
+            <input
+              placeholder="No. Bill"
+              value={log.nomor_bill}
+              onChange={(e) =>
+                setVoidDiscountLogs((prev) =>
+                  prev.map((l, idx) =>
+                    idx === i ? { ...l, nomor_bill: e.target.value } : l,
+                  ),
+                )
+              }
+              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <InputRupiah
+              value={log.nominal}
+              onChange={(v) =>
+                setVoidDiscountLogs((prev) =>
+                  prev.map((l, idx) => (idx === i ? { ...l, nominal: v } : l)),
+                )
+              }
+            />
+            <div className="flex gap-2">
+              <input
+                placeholder="Alasan"
+                value={log.alasan}
+                onChange={(e) =>
+                  setVoidDiscountLogs((prev) =>
+                    prev.map((l, idx) =>
+                      idx === i ? { ...l, alasan: e.target.value } : l,
+                    ),
+                  )
+                }
+                className="flex-1 px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={() =>
+                  setVoidDiscountLogs((prev) =>
+                    prev.filter((_, idx) => idx !== i),
+                  )
+                }
+                className="text-red-400 hover:text-red-600 px-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Member Deposit */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">
+            Member Deposit{" "}
+          </h3>
+          <button
+            onClick={() =>
+              setDepositLogs((prev) => [
+                ...prev,
+                {
+                  tipe: "DEPOSIT",
+                  nominal: "",
+                  nama_member: "",
+                  metode: "CASH",
+                  nomor_referensi: "",
+                },
+              ])
+            }
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          >
+            + Tambah
+          </button>
+        </div>
+        {depositLogs.length === 0 && (
+          <p className="text-xs text-slate-400 italic">
+            Tidak ada deposit member
+          </p>
+        )}
+        {depositLogs.map((log, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-4 gap-2 p-3 bg-slate-50 rounded-lg"
+          >
+            <input
+              placeholder="Nama Member"
+              value={log.nama_member}
+              onChange={(e) =>
+                setDepositLogs((prev) =>
+                  prev.map((l, idx) =>
+                    idx === i ? { ...l, nama_member: e.target.value } : l,
+                  ),
+                )
+              }
+              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <InputRupiah
+              value={log.nominal}
+              onChange={(v) =>
+                setDepositLogs((prev) =>
+                  prev.map((l, idx) => (idx === i ? { ...l, nominal: v } : l)),
+                )
+              }
+            />
+            <select
+              value={log.metode}
+              onChange={(e) =>
+                setDepositLogs((prev) =>
+                  prev.map((l, idx) =>
+                    idx === i ? { ...l, metode: e.target.value } : l,
+                  ),
+                )
+              }
+              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="CASH">Cash</option>
+              <option value="TRANSFER">Transfer</option>
+            </select>
+            <div className="flex gap-2">
+              <input
+                placeholder="No. Referensi"
+                value={log.nomor_referensi}
+                onChange={(e) =>
+                  setDepositLogs((prev) =>
+                    prev.map((l, idx) =>
+                      idx === i ? { ...l, nomor_referensi: e.target.value } : l,
+                    ),
+                  )
+                }
+                className="flex-1 px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={() =>
+                  setDepositLogs((prev) => prev.filter((_, idx) => idx !== i))
+                }
+                className="text-red-400 hover:text-red-600 px-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Other Cost */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-700">Other Cost</h3>
+          <button
+            onClick={() =>
+              setOtherCostLogs((prev) => [
+                ...prev,
+                {
+                  tipe: "OTHER_COST",
+                  nominal: "",
+                  kategori_biaya: "ATK",
+                  keterangan: "",
+                },
+              ])
+            }
+            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+          >
+            + Tambah
+          </button>
+        </div>
+        {otherCostLogs.length === 0 && (
+          <p className="text-xs text-slate-400 italic">Tidak ada biaya lain</p>
+        )}
+        {otherCostLogs.map((log, i) => (
+          <div
+            key={i}
+            className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-lg"
+          >
+            <select
+              value={log.kategori_biaya}
+              onChange={(e) =>
+                setOtherCostLogs((prev) =>
+                  prev.map((l, idx) =>
+                    idx === i ? { ...l, kategori_biaya: e.target.value } : l,
+                  ),
+                )
+              }
+              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ATK">ATK</option>
+              <option value="KEBERSIHAN">Kebersihan</option>
+              <option value="OPERASIONAL">Operasional</option>
+              <option value="LAIN_LAIN">Lain-lain</option>
+            </select>
+            <InputRupiah
+              value={log.nominal}
+              onChange={(v) =>
+                setOtherCostLogs((prev) =>
+                  prev.map((l, idx) => (idx === i ? { ...l, nominal: v } : l)),
+                )
+              }
+            />
+            <div className="flex gap-2">
+              <input
+                placeholder="Keterangan"
+                value={log.keterangan}
+                onChange={(e) =>
+                  setOtherCostLogs((prev) =>
+                    prev.map((l, idx) =>
+                      idx === i ? { ...l, keterangan: e.target.value } : l,
+                    ),
+                  )
+                }
+                className="flex-1 px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={() =>
+                  setOtherCostLogs((prev) => prev.filter((_, idx) => idx !== i))
+                }
+                className="text-red-400 hover:text-red-600 px-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-between pt-2">
+        <button
+          onClick={onBack}
+          className="text-slate-500 hover:text-slate-700 text-sm font-medium px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
+        >
+          ← Kembali
+        </button>
+        <button
+          onClick={saveSpecialLogs}
+          disabled={saving}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition"
+        >
+          {saving ? "Menyimpan..." : "Simpan & Lanjut →"}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  username      String        @unique
+  full_name     String
+  role          Role
+  password_hash String
+  is_active     Boolean       @default(true)
+  created_at    DateTime      @default(now())
+  approvals     Approval[]
+  shifts        ShiftReport[] @relation("ShiftOpener")
+  special_logs  SpecialLog[]
+
+  @@map("users")
+}
+
+model ShiftReport {
+  id                String            @id @default(cuid())
+  shift_date        DateTime          @db.Date
+  opened_by         String
+  opened_at         DateTime          @default(now())
+  closed_at         DateTime?
+  modal_awal        Decimal           @default(1000000) @db.Decimal(15, 2)
+  status            ShiftStatus       @default(OPEN)
+  shift_period      ShiftPeriod       @default(SHIFT_1)
+  variance_note     String?
+  created_at        DateTime          @default(now())
+  updated_at        DateTime          @updatedAt
+  approvals         Approval[]
+  opener            User              @relation("ShiftOpener", fields: [opened_by], references: [id])
+  special_logs      SpecialLog[]
+  transaction_lines TransactionLine[]
+
+  // Composite index: query kasir per status (GET /api/shifts?status=OPEN)
+  @@index([opened_by, status])
+  // Index tanggal untuk range query (filter shift_date from/to)
+  @@index([shift_date])
+  // Dashboard: ambil shift terbaru per kasir
+  @@index([opened_by, opened_at(sort: Desc)])
+  @@map("shift_reports")
+}
+
+model TransactionLine {
+  id         String            @id @default(cuid())
+  shift_id   String
+  sumber     TransactionSource
+  kategori   PaymentCategory
+  nilai      Decimal           @db.Decimal(15, 2)
+  catatan    String?
+  created_at DateTime          @default(now())
+  shift      ShiftReport       @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+
+  @@index([shift_id])
+  @@map("transaction_lines")
+}
+
+model SpecialLog {
+  id              String         @id @default(cuid())
+  shift_id        String
+  tipe            SpecialLogType
+  nama_member     String?
+  nomor_bill      String?
+  kategori_biaya  String?
+  nominal         Decimal        @db.Decimal(15, 2)
+  keterangan      String?
+  alasan          String?
+  metode          String?
+  nomor_referensi String?
+  created_by      String
+  created_at      DateTime       @default(now())
+  creator         User           @relation(fields: [created_by], references: [id])
+  shift           ShiftReport    @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+
+  @@index([shift_id])
+  @@index([created_by])
+  @@map("special_logs")
+}
+
+model Approval {
+  id          String         @id @default(cuid())
+  shift_id    String
+  approver_id String
+  action      ApprovalAction
+  catatan     String?
+  timestamp   DateTime       @default(now())
+  approver    User           @relation(fields: [approver_id], references: [id])
+  shift       ShiftReport    @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+
+  @@index([shift_id])
+  @@index([approver_id])
+  @@map("approvals")
+}
+
+enum Role {
+  CASHIER
+  HEAD_CASHIER
+  FINANCE
+}
+
+enum ShiftStatus {
+  OPEN
+  PENDING
+  PENDING_FINANCE
+  CLOSED
+}
+
+enum TransactionSource {
+  ESB
+  FISIK
+}
+
+enum PaymentCategory {
+  CASH
+  EDC_DEBIT
+  EDC_KREDIT
+  QRIS
+  TRANSFER
+}
+
+enum SpecialLogType {
+  VOID
+  DISCOUNT
+  DEPOSIT
+  OTHER_COST
+}
+
+enum ApprovalAction {
+  APPROVE
+  REJECT
+  CLOSE
+}
+
+enum ShiftPeriod {
+  SHIFT_1
+  SHIFT_2
+}

@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment (JANGAN pernah commit .env)
+.env
+.env.local
+.env.production
+
+# Next.js build output
+.next/
+out/
+
+# Prisma
+prisma/migrations/dev.db
+
+# Misc
+.DS_Store
+*.log
+tsconfig.tsbuildinfo
