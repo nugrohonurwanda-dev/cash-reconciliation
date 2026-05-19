@@ -1,3 +1,4 @@
+// src/components/layout/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -6,6 +7,9 @@ import { signOut } from "next-auth/react";
 import { Role } from "@prisma/client";
 import { useState } from "react";
 import ChangePasswordModal from "@/components/ChangePasswordModal";
+import EditProfileModal from "@/components/EditProfileModal";
+import NotificationBell from "@/components/ui/NotificationBell";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 type User = {
   id: string;
@@ -33,65 +37,40 @@ type NavItem = {
   roles: Role[];
 };
 
+function Icon({ d }: { d: string }) {
+  return (
+    <svg
+      className="w-5 h-5 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d={d}
+      />
+    </svg>
+  );
+}
+
 const navItems: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
     roles: [Role.CASHIER, Role.HEAD_CASHIER, Role.FINANCE],
     icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
-      </svg>
+      <Icon d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     ),
   },
   {
+    // Hanya CASHIER yang punya menu Shift — Head Cashier dan Finance tidak
     label: "Shift Saya",
     href: "/shifts",
     roles: [Role.CASHIER],
     icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      </svg>
-    ),
-  },
-  {
-    label: "Shift Saya",
-    href: "/shifts",
-    roles: [Role.HEAD_CASHIER],
-    icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
-      </svg>
+      <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
     ),
   },
   {
@@ -99,19 +78,7 @@ const navItems: NavItem[] = [
     href: "/review",
     roles: [Role.HEAD_CASHIER],
     icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-        />
-      </svg>
+      <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
     ),
   },
   {
@@ -119,19 +86,7 @@ const navItems: NavItem[] = [
     href: "/finance",
     roles: [Role.FINANCE],
     icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
+      <Icon d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     ),
   },
   {
@@ -139,19 +94,7 @@ const navItems: NavItem[] = [
     href: "/users",
     roles: [Role.FINANCE],
     icon: (
-      <svg
-        className="w-5 h-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-        />
-      </svg>
+      <Icon d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
     ),
   },
 ];
@@ -159,9 +102,11 @@ const navItems: NavItem[] = [
 export default function Sidebar({ user }: { user: User }) {
   const pathname = usePathname();
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+
+  if (!user) return null;
 
   const filteredNav = navItems.filter((item) => item.roles.includes(user.role));
-
   return (
     <aside className="w-64 bg-slate-900 flex flex-col h-full shrink-0">
       {/* Logo */}
@@ -192,9 +137,10 @@ export default function Sidebar({ user }: { user: User }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {filteredNav.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href + item.label}
@@ -212,9 +158,19 @@ export default function Sidebar({ user }: { user: User }) {
         })}
       </nav>
 
-      {/* User */}
-      <div className="px-3 py-4 border-t border-slate-700/50">
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg mb-2">
+      {/* Utilities: Notifikasi + Theme */}
+      <div className="px-3 pb-2 space-y-0.5">
+        <NotificationBell />
+        <ThemeToggle />
+      </div>
+
+      {/* User profile */}
+      <div className="px-3 pb-4 pt-2 border-t border-slate-700/50 space-y-0.5">
+        {/* Avatar + nama — klik untuk edit profil */}
+        <button
+          onClick={() => setShowEditProfile(true)}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors w-full text-left"
+        >
           <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center shrink-0">
             <span className="text-white text-xs font-bold">
               {user.name?.charAt(0).toUpperCase() ?? "U"}
@@ -230,14 +186,28 @@ export default function Sidebar({ user }: { user: User }) {
               {roleLabel[user.role]}
             </span>
           </div>
-        </div>
+          {/* Edit icon */}
+          <svg
+            className="w-4 h-4 text-slate-500 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+        </button>
 
         <button
           onClick={() => setShowChangePassword(true)}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
         >
           <svg
-            className="w-5 h-5"
+            className="w-5 h-5 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -254,10 +224,10 @@ export default function Sidebar({ user }: { user: User }) {
 
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
         >
           <svg
-            className="w-5 h-5"
+            className="w-5 h-5 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -275,6 +245,12 @@ export default function Sidebar({ user }: { user: User }) {
 
       {showChangePassword && (
         <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
+      {showEditProfile && (
+        <EditProfileModal
+          user={user}
+          onClose={() => setShowEditProfile(false)}
+        />
       )}
     </aside>
   );

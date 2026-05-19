@@ -25,6 +25,36 @@ export function formatRupiah(value: string): string {
 }
 
 /**
+ * Generate kode shift readable: SHF-YYYYMMDD-S1-001 atau SHF-YYYYMMDD-S2-001
+ * Contoh: SHF-20260519-S1-003
+ */
+export function generateShiftId(
+  date: Date,
+  shiftPeriod: "SHIFT_1" | "SHIFT_2",
+  sequence: number,
+): string {
+  const d = date.toISOString().split("T")[0].replace(/-/g, "");
+  const period = shiftPeriod === "SHIFT_1" ? "S1" : "S2";
+  const seq = String(sequence).padStart(3, "0");
+  return `SHF-${d}-${period}-${seq}`;
+}
+
+/**
+ * Format Date ke string tanggal + waktu Bahasa Indonesia.
+ * Contoh: "19 Mei 2026, 14:30"
+ */
+export function formatDateTimeID(date: Date | string): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Jakarta",
+  }).format(new Date(date));
+}
+
+/**
  * Parse string Rupiah (dengan titik) ke number.
  * Contoh: "1.500.000" → 1500000
  */

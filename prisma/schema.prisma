@@ -7,23 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── USER ─────────────────────────────────────────────────────────────────────
 model User {
-  id            String        @id @default(cuid())
-  username      String        @unique
+  id            String         @id @default(cuid())
+  username      String         @unique
   full_name     String
   role          Role
   password_hash String
-  is_active     Boolean       @default(true)
-  created_at    DateTime      @default(now())
+  is_active     Boolean        @default(true)
+  created_at    DateTime       @default(now())
   approvals     Approval[]
-  shifts        ShiftReport[] @relation("ShiftOpener")
+  shifts        ShiftReport[]  @relation("ShiftOpener")
   special_logs  SpecialLog[]
+  notifications Notification[]
 
   @@map("users")
 }
 
+// ─── SHIFT REPORT ─────────────────────────────────────────────────────────────
+// id tidak lagi CUID — generate manual di application layer
+// format: SHF-YYYYMMDD-S1-001
 model ShiftReport {
-  id                String            @id @default(cuid())
+  id                String            @id
   shift_date        DateTime          @db.Date
   opened_by         String
   opened_at         DateTime          @default(now())
@@ -39,15 +44,13 @@ model ShiftReport {
   special_logs      SpecialLog[]
   transaction_lines TransactionLine[]
 
-  // Composite index: query kasir per status (GET /api/shifts?status=OPEN)
   @@index([opened_by, status])
-  // Index tanggal untuk range query (filter shift_date from/to)
   @@index([shift_date])
-  // Dashboard: ambil shift terbaru per kasir
   @@index([opened_by, opened_at(sort: Desc)])
   @@map("shift_reports")
 }
 
+// ─── TRANSACTION LINE ─────────────────────────────────────────────────────────
 model TransactionLine {
   id         String            @id @default(cuid())
   shift_id   String
@@ -62,28 +65,28 @@ model TransactionLine {
   @@map("transaction_lines")
 }
 
+// ─── SPECIAL LOG ──────────────────────────────────────────────────────────────
+// DEPOSIT dihapus dari tipe ini — sudah masuk TransactionLine (DEPOSIT_BANK / DEPOSIT_CASH)
 model SpecialLog {
-  id              String         @id @default(cuid())
-  shift_id        String
-  tipe            SpecialLogType
-  nama_member     String?
-  nomor_bill      String?
-  kategori_biaya  String?
-  nominal         Decimal        @db.Decimal(15, 2)
-  keterangan      String?
-  alasan          String?
-  metode          String?
-  nomor_referensi String?
-  created_by      String
-  created_at      DateTime       @default(now())
-  creator         User           @relation(fields: [created_by], references: [id])
-  shift           ShiftReport    @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+  id             String         @id @default(cuid())
+  shift_id       String
+  tipe           SpecialLogType
+  nomor_bill     String?
+  kategori_biaya String?
+  nominal        Decimal        @db.Decimal(15, 2)
+  keterangan     String?
+  alasan         String?
+  created_by     String
+  created_at     DateTime       @default(now())
+  creator        User           @relation(fields: [created_by], references: [id])
+  shift          ShiftReport    @relation(fields: [shift_id], references: [id], onDelete: Cascade)
 
   @@index([shift_id])
   @@index([created_by])
   @@map("special_logs")
 }
 
+// ─── APPROVAL ─────────────────────────────────────────────────────────────────
 model Approval {
   id          String         @id @default(cuid())
   shift_id    String
@@ -98,6 +101,24 @@ model Approval {
   @@index([approver_id])
   @@map("approvals")
 }
+
+// ─── NOTIFICATION ─────────────────────────────────────────────────────────────
+model Notification {
+  id         String    @id @default(cuid())
+  user_id    String
+  type       NotifType
+  shift_id   String?
+  message    String
+  is_read    Boolean   @default(false)
+  created_at DateTime  @default(now())
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, is_read])
+  @@index([created_at])
+  @@map("notifications")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
 
 enum Role {
   CASHIER
@@ -119,16 +140,25 @@ enum TransactionSource {
 
 enum PaymentCategory {
   CASH
-  EDC_DEBIT
-  EDC_KREDIT
-  QRIS
-  TRANSFER
+  EDC_BRI
+  EDC_BNI
+  EDC_BCA
+  EDC_BSI
+  QRIS_BRI
+  QRIS_BNI
+  QRIS_BCA
+  QRIS_BSI
+  TRANSFER_BRI
+  TRANSFER_BNI
+  TRANSFER_BCA
+  TRANSFER_BSI
+  DEPOSIT_BANK
+  DEPOSIT_CASH
 }
 
 enum SpecialLogType {
   VOID
   DISCOUNT
-  DEPOSIT
   OTHER_COST
 }
 
@@ -141,4 +171,11 @@ enum ApprovalAction {
 enum ShiftPeriod {
   SHIFT_1
   SHIFT_2
+}
+
+enum NotifType {
+  SHIFT_REJECTED
+  SHIFT_APPROVED
+  SHIFT_PENDING_REVIEW
+  SHIFT_CLOSED
 }

@@ -1,130 +1,226 @@
 // src/lib/calculations.ts
-import { Decimal } from "@prisma/client/runtime/library";
-import { TransactionLine, PaymentCategory } from "@prisma/client";
+/**
+ * Semua kalkulasi finansial dilakukan server-side.
+ * Menggunakan Prisma Decimal untuk presisi — JANGAN pakai float JS untuk uang.
+ *
+ * Alur rekonsiliasi:
+ *   1. Kasir input data ESB (dari sistem POS) dan Fisik (hitung manual)
+ *   2. Selisih = Fisik - ESB per kategori
+ *   3. Jika selisih negatif dan abs > Rp 50.000 → wajib keterangan
+ *
+ * Definisi Sales / Omzet Bersih:
+ *   omzet_bersih = total_fisik (sales categories only) - total_void - total_discount
+ *   other_cost   = dicatat terpisah, TIDAK mengurangi omzet (pengeluaran operasional)
+ *   deposit      = bukan sales, masuk TransactionLine tapi dikecualikan dari omzet
+ */
 
-export const VARIANCE_THRESHOLD = new Decimal(50000); // Rp 50.000
+import { Decimal } from '@prisma/client/runtime/library'
+import { TransactionLine, PaymentCategory, SpecialLog, SpecialLogType } from '@prisma/client'
+import { SALES_CATEGORIES, NON_SALES_CATEGORIES, VARIANCE_THRESHOLD_IDR } from '@/lib/constants'
 
-export type ReconciliationSummary = {
-  kategori: PaymentCategory;
-  esb: Decimal;
-  fisik: Decimal;
-  selisih: Decimal;
-}[];
+export const VARIANCE_THRESHOLD = new Decimal(VARIANCE_THRESHOLD_IDR)
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type CategorySummary = {
+  kategori: PaymentCategory
+  esb: Decimal
+  fisik: Decimal
+  selisih: Decimal // fisik - esb (positif = lebih, negatif = kurang)
+}
 
 export type ShiftTotals = {
-  total_esb: Decimal;
-  total_fisik: Decimal;
-  total_selisih: Decimal;
-  per_kategori: ReconciliationSummary;
-  is_variance_exceeded: boolean;
-};
+  // Rekonsiliasi per kategori (semua 15 kategori)
+  per_kategori: CategorySummary[]
 
-/**
- * Hitung rekonsiliasi dari transaction_lines.
- * Semua kalkulasi dilakukan server-side — tidak boleh di client.
- */
-export function calculateReconciliation(lines: TransactionLine[]): ShiftTotals {
-  const categories = Object.values(PaymentCategory);
+  // Total ESB semua kategori
+  total_esb: Decimal
 
-  const per_kategori: ReconciliationSummary = categories.map((kategori) => {
-    const esb = lines
-      .filter((l) => l.sumber === "ESB" && l.kategori === kategori)
-      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0));
+  // Total Fisik semua kategori (termasuk deposit)
+  total_fisik: Decimal
 
-    const fisik = lines
-      .filter((l) => l.sumber === "FISIK" && l.kategori === kategori)
-      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0));
+  // Total selisih = total_fisik - total_esb
+  total_selisih: Decimal
 
-    const selisih = fisik.minus(esb);
+  // Total Fisik hanya kategori sales (exclude deposit)
+  total_fisik_sales: Decimal
 
-    return { kategori, esb, fisik, selisih };
-  });
+  // Total ESB hanya kategori sales
+  total_esb_sales: Decimal
 
-  const total_esb = per_kategori.reduce(
-    (sum, r) => sum.plus(r.esb),
-    new Decimal(0),
-  );
-  const total_fisik = per_kategori.reduce(
-    (sum, r) => sum.plus(r.fisik),
-    new Decimal(0),
-  );
-  const total_selisih = total_fisik.minus(total_esb);
+  // Deposit terpisah (informatif, bukan sales)
+  total_deposit_fisik: Decimal
+  total_deposit_esb: Decimal
 
-  const is_variance_exceeded =
-    total_selisih.isNegative() &&
-    total_selisih.abs().greaterThan(VARIANCE_THRESHOLD);
+  // Flag: selisih minus melebihi threshold → wajib keterangan
+  is_variance_exceeded: boolean
+}
 
-  return {
-    total_esb,
-    total_fisik,
-    total_selisih,
-    per_kategori,
-    is_variance_exceeded,
-  };
+export type SalesBreakdown = {
+  // Omzet kotor dari penjualan (fisik, exclude deposit)
+  omzet_kotor: Decimal
+
+  // Pengurangan dari omzet
+  total_void: Decimal
+  total_discount: Decimal
+
+  // Omzet bersih = omzet_kotor - void - discount
+  omzet_bersih: Decimal
+
+  // Other cost: pengeluaran operasional, TIDAK mengurangi omzet
+  total_other_cost: Decimal
+
+  // Deposit: uang titipan member, bukan pendapatan
+  total_deposit: Decimal
 }
 
 export type DailyAccumulation = {
-  shift_1: ShiftTotals | null;
-  shift_2: ShiftTotals | null;
+  shift_1: ShiftTotals | null
+  shift_2: ShiftTotals | null
   combined: {
-    total_esb: Decimal;
-    total_fisik: Decimal;
-    total_selisih: Decimal;
-    per_kategori: ReconciliationSummary;
-  };
-};
+    total_esb: Decimal
+    total_fisik: Decimal
+    total_selisih: Decimal
+    total_fisik_sales: Decimal
+    per_kategori: CategorySummary[]
+  }
+}
+
+// ─── Core: Rekonsiliasi ───────────────────────────────────────────────────────
 
 /**
- * Hitung akumulasi harian dari dua shift.
- * Shift 1 dan Shift 2 masing-masing dihitung independen,
- * lalu digabung untuk total hari.
+ * Hitung rekonsiliasi ESB vs Fisik dari transaction_lines satu shift.
+ * Semua 15 kategori selalu ada di hasil, nilai 0 jika tidak ada data.
+ */
+export function calculateReconciliation(lines: TransactionLine[]): ShiftTotals {
+  const categories = Object.values(PaymentCategory)
+
+  const per_kategori: CategorySummary[] = categories.map((kategori) => {
+    const esb = lines
+      .filter((l) => l.sumber === 'ESB' && l.kategori === kategori)
+      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0))
+
+    const fisik = lines
+      .filter((l) => l.sumber === 'FISIK' && l.kategori === kategori)
+      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0))
+
+    return { kategori, esb, fisik, selisih: fisik.minus(esb) }
+  })
+
+  const total_esb = per_kategori.reduce((s, r) => s.plus(r.esb), new Decimal(0))
+  const total_fisik = per_kategori.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
+  const total_selisih = total_fisik.minus(total_esb)
+
+  // Sales only (exclude deposit)
+  const sales = per_kategori.filter((r) =>
+    SALES_CATEGORIES.includes(r.kategori),
+  )
+  const total_fisik_sales = sales.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
+  const total_esb_sales = sales.reduce((s, r) => s.plus(r.esb), new Decimal(0))
+
+  // Deposit totals
+  const deposits = per_kategori.filter((r) =>
+    NON_SALES_CATEGORIES.includes(r.kategori),
+  )
+  const total_deposit_fisik = deposits.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
+  const total_deposit_esb = deposits.reduce((s, r) => s.plus(r.esb), new Decimal(0))
+
+  const is_variance_exceeded =
+    total_selisih.isNegative() &&
+    total_selisih.abs().greaterThan(VARIANCE_THRESHOLD)
+
+  return {
+    per_kategori,
+    total_esb,
+    total_fisik,
+    total_selisih,
+    total_fisik_sales,
+    total_esb_sales,
+    total_deposit_fisik,
+    total_deposit_esb,
+    is_variance_exceeded,
+  }
+}
+
+// ─── Sales Breakdown (untuk PDF dan Finance summary) ─────────────────────────
+
+/**
+ * Hitung omzet bersih dan breakdown komponen sales dari satu shift.
  *
- * @param shift1Lines - transaction_lines dari Shift 1 (null kalau belum ada)
- * @param shift2Lines - transaction_lines dari Shift 2 (shift yang sedang dilihat)
+ * other_cost TIDAK mengurangi omzet — ini adalah pengeluaran operasional
+ * yang dicatat sebagai informasi terpisah (bukan deduction dari revenue).
+ */
+export function calculateSalesBreakdown(
+  lines: TransactionLine[],
+  special_logs: SpecialLog[],
+): SalesBreakdown {
+  const recon = calculateReconciliation(lines)
+
+  const safeDecimal = (v: unknown): Decimal =>
+    new Decimal(v == null ? 0 : String(v))
+
+  const sumByTipe = (tipe: SpecialLogType): Decimal =>
+    special_logs
+      .filter((l) => l.tipe === tipe)
+      .reduce((sum, l) => sum.plus(safeDecimal(l.nominal)), new Decimal(0))
+
+  const total_void = sumByTipe(SpecialLogType.VOID)
+  const total_discount = sumByTipe(SpecialLogType.DISCOUNT)
+  const total_other_cost = sumByTipe(SpecialLogType.OTHER_COST)
+
+  const omzet_kotor = recon.total_fisik_sales
+  const omzet_bersih = omzet_kotor.minus(total_void).minus(total_discount)
+
+  // Total deposit (bank + cash) dari fisik
+  const total_deposit = recon.total_deposit_fisik
+
+  return {
+    omzet_kotor,
+    total_void,
+    total_discount,
+    omzet_bersih,
+    total_other_cost,
+    total_deposit,
+  }
+}
+
+// ─── Daily Accumulation (Shift 1 + Shift 2) ──────────────────────────────────
+
+/**
+ * Gabungkan data dua shift dalam satu hari.
+ * Dipakai di PDF Shift 2 untuk tampilkan total harian.
  */
 export function calculateDailyAccumulation(
   shift1Lines: TransactionLine[] | null,
   shift2Lines: TransactionLine[],
 ): DailyAccumulation {
-  const shift1 = shift1Lines ? calculateReconciliation(shift1Lines) : null;
-  const shift2 = calculateReconciliation(shift2Lines);
+  const shift_1 = shift1Lines ? calculateReconciliation(shift1Lines) : null
+  const shift_2 = calculateReconciliation(shift2Lines)
 
-  // Gabungkan semua lines dari kedua shift untuk kalkulasi combined
-  const allLines = [...(shift1Lines ?? []), ...shift2Lines];
-  const categories = Object.values(PaymentCategory);
+  const allLines = [...(shift1Lines ?? []), ...shift2Lines]
+  const categories = Object.values(PaymentCategory)
 
-  const per_kategori: ReconciliationSummary = categories.map((kategori) => {
+  const per_kategori: CategorySummary[] = categories.map((kategori) => {
     const esb = allLines
-      .filter((l) => l.sumber === "ESB" && l.kategori === kategori)
-      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0));
-
+      .filter((l) => l.sumber === 'ESB' && l.kategori === kategori)
+      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0))
     const fisik = allLines
-      .filter((l) => l.sumber === "FISIK" && l.kategori === kategori)
-      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0));
+      .filter((l) => l.sumber === 'FISIK' && l.kategori === kategori)
+      .reduce((sum, l) => sum.plus(l.nilai), new Decimal(0))
+    return { kategori, esb, fisik, selisih: fisik.minus(esb) }
+  })
 
-    const selisih = fisik.minus(esb);
+  const total_esb = per_kategori.reduce((s, r) => s.plus(r.esb), new Decimal(0))
+  const total_fisik = per_kategori.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
+  const total_selisih = total_fisik.minus(total_esb)
 
-    return { kategori, esb, fisik, selisih };
-  });
-
-  const total_esb = per_kategori.reduce(
-    (sum, r) => sum.plus(r.esb),
-    new Decimal(0),
-  );
-  const total_fisik = per_kategori.reduce(
-    (sum, r) => sum.plus(r.fisik),
-    new Decimal(0),
-  );
-  const total_selisih = total_fisik.minus(total_esb);
+  const total_fisik_sales = per_kategori
+    .filter((r) => SALES_CATEGORIES.includes(r.kategori))
+    .reduce((s, r) => s.plus(r.fisik), new Decimal(0))
 
   return {
-    shift_1: shift1,
-    shift_2: shift2,
-    combined: {
-      total_esb,
-      total_fisik,
-      total_selisih,
-      per_kategori,
-    },
-  };
+    shift_1,
+    shift_2,
+    combined: { total_esb, total_fisik, total_selisih, total_fisik_sales, per_kategori },
+  }
 }
