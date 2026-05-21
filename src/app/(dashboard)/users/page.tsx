@@ -162,8 +162,8 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Kelola User</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Kelola User</h1>
+          <p className="text-[var(--muted)] text-sm mt-1">
             Manajemen akun pengguna sistem
           </p>
         </div>
@@ -206,31 +206,31 @@ export default function UsersPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
+          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
             Memuat data...
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
               <tr>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Nama
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Username
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Role
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Dibuat
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Aksi
                 </th>
               </tr>
@@ -241,12 +241,12 @@ export default function UsersPage() {
                 return (
                   <tr
                     key={user.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition"
+                    className="border-b border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
                   >
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
                       {user.full_name}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {user.username}
                     </td>
                     <td className="px-4 py-3">
@@ -267,7 +267,7 @@ export default function UsersPage() {
                         {user.is_active ? "Aktif" : "Nonaktif"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-500">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {new Date(user.created_at).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
@@ -305,7 +305,7 @@ export default function UsersPage() {
                         {!user.has_shifts && (
                           <button
                             onClick={() => setConfirmDelete(user)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 border border-slate-200 hover:border-red-200 transition"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--surface-hover)] hover:bg-red-50 text-[var(--text-tertiary)] hover:text-red-600 border border-[var(--border)] hover:border-red-200 transition"
                           >
                             Hapus
                           </button>
@@ -323,7 +323,7 @@ export default function UsersPage() {
       {/* Modal Reset Password */}
       {resetTarget && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center shrink-0">
                 <svg
@@ -341,12 +341,12 @@ export default function UsersPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-[var(--foreground)]">
                   Reset Password
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--muted)]">
                   untuk
-                  <span className="font-semibold text-slate-700">
+                  <span className="font-semibold text-[var(--foreground)]">
                     {resetTarget.full_name}
                   </span>
                 </p>
@@ -360,7 +360,7 @@ export default function UsersPage() {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-[var(--foreground)]">
                 Password Baru
               </label>
               <input
@@ -368,7 +368,7 @@ export default function UsersPage() {
                 value={resetPassword}
                 onChange={(e) => setResetPassword(e.target.value)}
                 placeholder="Minimal 8 karakter"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-violet-500 transition"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-violet-500 transition"
               />
             </div>
 
@@ -380,7 +380,7 @@ export default function UsersPage() {
                   setError("");
                 }}
                 disabled={resetSaving}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
               >
                 Batal
               </button>
@@ -399,7 +399,7 @@ export default function UsersPage() {
       {/* Modal Konfirmasi Hapus */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">
                 <svg
@@ -417,21 +417,21 @@ export default function UsersPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-[var(--foreground)]">
                   Hapus User
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--muted)]">
                   Tindakan ini tidak dapat dibatalkan
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-50 rounded-lg p-3 text-sm">
-              <p className="text-slate-600">Kamu akan menghapus:</p>
-              <p className="font-semibold text-slate-900 mt-1">
+            <div className="bg-[var(--surface-hover)] rounded-lg p-3 text-sm">
+              <p className="text-[var(--muted)]">Kamu akan menghapus:</p>
+              <p className="font-semibold text-[var(--foreground)] mt-1">
                 {confirmDelete.full_name}
               </p>
-              <p className="text-slate-500 text-xs">
+              <p className="text-[var(--muted)] text-xs">
                 {confirmDelete.username} ·
                 {ROLE_LABEL[confirmDelete.role]?.label}
               </p>
@@ -441,7 +441,7 @@ export default function UsersPage() {
               <button
                 onClick={() => setConfirmDelete(null)}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
               >
                 Batal
               </button>
@@ -460,8 +460,8 @@ export default function UsersPage() {
       {/* Modal Tambah User */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-slate-900">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h2 className="text-lg font-bold text-[var(--foreground)]">
               Tambah User Baru
             </h2>
 
@@ -473,7 +473,7 @@ export default function UsersPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-[var(--foreground)]">
                   Nama Lengkap
                 </label>
                 <input
@@ -484,12 +484,12 @@ export default function UsersPage() {
                   }
                   placeholder="Nama lengkap"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-[var(--foreground)]">
                   Username
                 </label>
                 <input
@@ -500,12 +500,12 @@ export default function UsersPage() {
                   }
                   placeholder="Username untuk login"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-[var(--foreground)]">
                   Role
                 </label>
                 <select
@@ -513,7 +513,7 @@ export default function UsersPage() {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, role: e.target.value }))
                   }
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
                 >
                   <option value="CASHIER">Kasir</option>
                   <option value="HEAD_CASHIER">Head Kasir</option>
@@ -522,7 +522,7 @@ export default function UsersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium text-[var(--foreground)]">
                   Password
                 </label>
                 <input
@@ -534,7 +534,7 @@ export default function UsersPage() {
                   placeholder="Minimal 8 karakter"
                   required
                   minLength={8}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
               </div>
 
@@ -542,7 +542,7 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
                 >
                   Batal
                 </button>

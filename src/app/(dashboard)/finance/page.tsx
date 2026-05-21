@@ -179,14 +179,14 @@ export default function FinancePage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Semua Laporan</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-[var(--foreground)]">Semua Laporan</h1>
+        <p className="text-[var(--muted)] text-sm mt-1">
           Finalisasi dan tutup laporan rekonsiliasi
         </p>
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 space-y-4">
         {/* Baris 1: Status + Mode Filter */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Status filter */}
@@ -198,7 +198,7 @@ export default function FinancePage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                   statusFilter === s
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 text-[var(--muted)] hover:bg-slate-200"
                 }`}
               >
                 {s === "" ? "Semua Status" : (STATUS_LABEL[s]?.label ?? s)}
@@ -223,7 +223,7 @@ export default function FinancePage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                   filterMode === m.key
                     ? "bg-slate-800 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-slate-100 text-[var(--muted)] hover:bg-slate-200"
                 }`}
               >
                 {m.label}
@@ -235,13 +235,13 @@ export default function FinancePage() {
         {/* Baris 2: Input filter tanggal (kondisional) */}
         {filterMode === "month" && (
           <div className="flex items-center gap-3">
-            <label className="text-sm text-slate-500 font-medium shrink-0">
+            <label className="text-sm text-[var(--muted)] font-medium shrink-0">
               Pilih Bulan:
             </label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             >
               {MONTHS.map((m, i) => (
                 <option key={i} value={i}>
@@ -252,7 +252,7 @@ export default function FinancePage() {
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             >
               {years.map((y) => (
                 <option key={y} value={y}>
@@ -265,16 +265,16 @@ export default function FinancePage() {
 
         {filterMode === "range" && (
           <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-sm text-slate-500 font-medium shrink-0">
+            <label className="text-sm text-[var(--muted)] font-medium shrink-0">
               Dari:
             </label>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
-            <label className="text-sm text-slate-500 font-medium shrink-0">
+            <label className="text-sm text-[var(--muted)] font-medium shrink-0">
               Sampai:
             </label>
             <input
@@ -282,7 +282,7 @@ export default function FinancePage() {
               value={dateTo}
               min={dateFrom}
               onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+              className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
             {(dateFrom || dateTo) && (
               <button
@@ -290,7 +290,7 @@ export default function FinancePage() {
                   setDateFrom("");
                   setDateTo("");
                 }}
-                className="text-xs text-slate-400 hover:text-slate-600 transition"
+                className="text-xs text-[var(--text-tertiary)] hover:text-[var(--muted)] transition"
               >
                 Reset
               </button>
@@ -302,24 +302,24 @@ export default function FinancePage() {
       {/* Summary Card — tampil hanya kalau ada filter & ada data CLOSED */}
       {filterMode !== "all" && closedShifts.length > 0 && (
         <div className="bg-slate-900 rounded-xl p-5">
-          <p className="text-slate-400 text-xs font-medium mb-4 uppercase tracking-wide">
+          <p className="text-[var(--text-tertiary)] text-xs font-medium mb-4 uppercase tracking-wide">
             Rekap {periodLabel()}
           </p>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="text-slate-400 text-xs">Total Shift Closed</p>
+              <p className="text-[var(--text-tertiary)] text-xs">Total Shift Closed</p>
               <p className="text-white text-2xl font-bold mt-1">
                 {closedShifts.length}
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Total Modal Awal</p>
+              <p className="text-[var(--text-tertiary)] text-xs">Total Modal Awal</p>
               <p className="text-white text-2xl font-bold mt-1">
                 {fmt(totalModalAwal)}
               </p>
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Menunggu Finance</p>
+              <p className="text-[var(--text-tertiary)] text-xs">Menunggu Finance</p>
               <p className="text-amber-400 text-2xl font-bold mt-1">
                 {shifts.filter((s) => s.status === "PENDING_FINANCE").length}
               </p>
@@ -329,14 +329,14 @@ export default function FinancePage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
+          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
             Memuat data...
           </div>
         ) : shifts.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-slate-400 text-sm">Tidak ada laporan</p>
+            <p className="text-[var(--text-tertiary)] text-sm">Tidak ada laporan</p>
             {filterMode !== "all" && (
               <p className="text-slate-300 text-xs mt-1">
                 Coba ubah filter periode atau status
@@ -345,24 +345,24 @@ export default function FinancePage() {
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
               <tr>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Tanggal
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Kasir
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Jam Buka
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Modal Awal
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Aksi
                 </th>
               </tr>
@@ -375,9 +375,9 @@ export default function FinancePage() {
                 return (
                   <tr
                     key={shift.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition"
+                    className="border-b border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
                   >
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
                       {new Date(shift.shift_date).toLocaleDateString("id-ID", {
                         weekday: "short",
                         day: "numeric",
@@ -385,16 +385,16 @@ export default function FinancePage() {
                         year: "numeric",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {shift.opener?.full_name}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {new Date(shift.opened_at).toLocaleTimeString("id-ID", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       Rp {parseInt(shift.modal_awal).toLocaleString("id-ID")}
                     </td>
                     <td className="px-4 py-3">
@@ -427,7 +427,7 @@ export default function FinancePage() {
                         {isClosed && (
                           <button
                             onClick={() => openPDF(shift.id)}
-                            className="bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                            className="bg-[var(--surface-hover)] hover:bg-slate-100 text-[var(--foreground)] text-xs font-medium px-3 py-1.5 rounded-lg transition"
                           >
                             Lihat PDF
                           </button>
@@ -445,13 +445,13 @@ export default function FinancePage() {
       {/* Modal Close */}
       {actionShift && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-slate-900">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <h2 className="text-lg font-bold text-[var(--foreground)]">
               Tutup & Generate Laporan
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[var(--muted)]">
               Shift:
-              <span className="font-medium text-slate-700">
+              <span className="font-medium text-[var(--foreground)]">
                 {actionShift.opener?.full_name}
               </span>
               — {new Date(actionShift.shift_date).toLocaleDateString("id-ID")}
@@ -469,7 +469,7 @@ export default function FinancePage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-[var(--foreground)]">
                 Catatan (opsional)
               </label>
               <textarea
@@ -477,14 +477,14 @@ export default function FinancePage() {
                 onChange={(e) => setCatatan(e.target.value)}
                 placeholder="Catatan penutupan laporan..."
                 rows={3}
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
+                className="w-full px-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
               />
             </div>
 
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setActionShift(null)}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
               >
                 Batal
               </button>

@@ -15,7 +15,7 @@ import {
 function StatCard({
   label,
   value,
-  color = "text-slate-900",
+  color = "text-foreground",
   sub,
 }: {
   label: string;
@@ -24,10 +24,10 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <p className="text-sm text-slate-500">{label}</p>
+    <div className="rounded-xl border p-5" style={{backgroundColor:"var(--surface)",borderColor:"var(--border)"}}>
+      <p className="text-sm" style={{color:"var(--muted)"}}>{label}</p>
       <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+      {sub && <p className="text-xs mt-1" style={{color:"var(--text-tertiary)"}}>{sub}</p>}
     </div>
   );
 }
@@ -62,10 +62,10 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{color:"var(--foreground)"}}>Dashboard</h1>
+          <p className="text-sm mt-1" style={{color:"var(--muted)"}}>
             Selamat datang,
-            <span className="font-medium text-slate-700">
+            <span className="font-medium" style={{color:"var(--foreground)"}}>
               {session.user.name}
             </span>
           </p>
@@ -79,23 +79,23 @@ export default async function DashboardPage() {
                 ? STATUS_LABEL[activeShift.status]?.label
                 : "Tidak ada"
             }
-            color={activeShift ? "text-emerald-600" : "text-slate-400"}
+            color={activeShift ? "text-emerald-600" : "text-[var(--text-tertiary)]"}
           />
           <StatCard label="Total Shift" value={totalShift} />
           <StatCard
             label="Status Terakhir"
             value={shifts[0] ? STATUS_LABEL[shifts[0].status]?.label : "-"}
-            color="text-slate-600"
+            color="text-[var(--muted)]"
           />
         </div>
 
         {activeShift ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between">
+          <div className="rounded-xl border p-5 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-900">
+              <p className="text-sm font-medium text-[var(--foreground)]">
                 Shift sedang berjalan
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
                 Dibuka
                 {new Date(activeShift.opened_at).toLocaleTimeString("id-ID", {
                   hour: "2-digit",
@@ -111,8 +111,8 @@ export default async function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
-            <p className="text-slate-500 text-sm mb-4">Belum ada shift aktif</p>
+          <div className="rounded-xl border p-6 text-center">
+            <p className="text-[var(--muted)] text-sm mb-4">Belum ada shift aktif</p>
             <Link
               href="/shifts/new"
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition"
@@ -137,25 +137,25 @@ export default async function DashboardPage() {
 
         {/* Riwayat shift */}
         {shifts.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <div className="rounded-xl border overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)]">
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">
                 Shift Terakhir
               </h2>
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-[var(--surface-hover)]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Tanggal
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Shift
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Aksi
                   </th>
                 </tr>
@@ -164,7 +164,7 @@ export default async function DashboardPage() {
                 {shifts.map((shift) => (
                   <tr
                     key={shift.id}
-                    className="border-t border-slate-100 hover:bg-slate-50"
+                    className="border-t border-[var(--border)] hover:bg-[var(--surface-hover)]"
                   >
                     <td className="px-4 py-3 text-slate-700">
                       {new Date(shift.shift_date).toLocaleDateString("id-ID", {
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
                           shift.shift_period}
@@ -242,10 +242,10 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{color:"var(--foreground)"}}>Dashboard</h1>
+          <p className="text-sm mt-1" style={{color:"var(--muted)"}}>
             Selamat datang,
-            <span className="font-medium text-slate-700">
+            <span className="font-medium" style={{color:"var(--foreground)"}}>
               {session.user.name}
             </span>
           </p>
@@ -255,7 +255,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Menunggu Review"
             value={pendingCount}
-            color={pendingCount > 0 ? "text-amber-600" : "text-slate-400"}
+            color={pendingCount > 0 ? "text-amber-600" : "text-[var(--text-tertiary)]"}
           />
           <StatCard label="Shift Hari Ini" value={todayShifts} />
           <StatCard
@@ -266,9 +266,9 @@ export default async function DashboardPage() {
         </div>
 
         {recentPending.length > 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <div className="rounded-xl border overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">
                 Perlu Direview
               </h2>
               <Link
@@ -279,18 +279,18 @@ export default async function DashboardPage() {
               </Link>
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-[var(--surface-hover)]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Kasir
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Shift
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Tanggal
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Aksi
                   </th>
                 </tr>
@@ -299,20 +299,20 @@ export default async function DashboardPage() {
                 {recentPending.map((shift) => (
                   <tr
                     key={shift.id}
-                    className="border-t border-slate-100 hover:bg-slate-50"
+                    className="border-t border-[var(--border)] hover:bg-[var(--surface-hover)]"
                   >
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
                       {shift.opener.full_name}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
                           shift.shift_period}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {new Date(shift.shift_date).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
@@ -333,8 +333,8 @@ export default async function DashboardPage() {
             </table>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
-            <p className="text-slate-400 text-sm">
+          <div className="rounded-xl border p-6 text-center">
+            <p className="text-[var(--text-tertiary)] text-sm">
               Tidak ada laporan yang menunggu review
             </p>
           </div>
@@ -384,10 +384,10 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold" style={{color:"var(--foreground)"}}>Dashboard</h1>
+          <p className="text-sm mt-1" style={{color:"var(--muted)"}}>
             Selamat datang
-            <span className="font-medium text-slate-700">
+            <span className="font-medium" style={{color:"var(--foreground)"}}>
               {session.user.name}
             </span>
           </p>
@@ -398,7 +398,7 @@ export default async function DashboardPage() {
             label="Menunggu Finalisasi"
             value={pendingFinanceCount}
             color={
-              pendingFinanceCount > 0 ? "text-amber-600" : "text-slate-400"
+              pendingFinanceCount > 0 ? "text-amber-600" : "text-[var(--text-tertiary)]"
             }
           />
           <StatCard
@@ -409,7 +409,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Total Omzet Cash"
             value={formatRupiahDisplay(totalCash)}
-            color="text-slate-900"
+            color="text-[var(--foreground)]"
           />
           <StatCard
             label="Total Omzet Bank"
@@ -419,9 +419,9 @@ export default async function DashboardPage() {
         </div>
 
         {recentPendingFinance.length > 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900">
+          <div className="rounded-xl border overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[var(--foreground)]">
                 Perlu Difinalisasi
               </h2>
               <Link
@@ -432,18 +432,18 @@ export default async function DashboardPage() {
               </Link>
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+              <thead className="bg-[var(--surface-hover)]">
                 <tr>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Kasir
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Shift
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Tanggal
                   </th>
-                  <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                  <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                     Aksi
                   </th>
                 </tr>
@@ -452,20 +452,20 @@ export default async function DashboardPage() {
                 {recentPendingFinance.map((shift) => (
                   <tr
                     key={shift.id}
-                    className="border-t border-slate-100 hover:bg-slate-50"
+                    className="border-t border-[var(--border)] hover:bg-[var(--surface-hover)]"
                   >
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
                       {shift.opener.full_name}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
                           shift.shift_period}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {new Date(shift.shift_date).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "short",
@@ -486,8 +486,8 @@ export default async function DashboardPage() {
             </table>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-slate-200 p-6 text-center">
-            <p className="text-slate-400 text-sm">
+          <div className="rounded-xl border p-6 text-center">
+            <p className="text-[var(--text-tertiary)] text-sm">
               Tidak ada laporan yang menunggu finalisasi
             </p>
           </div>

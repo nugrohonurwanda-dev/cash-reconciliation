@@ -26,7 +26,7 @@ export default function SubmitPanel({
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[var(--muted)]">
         Periksa kembali data sebelum submit laporan
       </p>
 
@@ -35,12 +35,12 @@ export default function SubmitPanel({
           {
             label: "Total ESB",
             value: totalEsb,
-            color: "text-slate-900",
+            color: "text-[var(--foreground)]",
           },
           {
             label: "Total Fisik",
             value: totalFisik,
-            color: "text-slate-900",
+            color: "text-[var(--foreground)]",
           },
           {
             label: "Selisih",
@@ -50,14 +50,14 @@ export default function SubmitPanel({
                 ? "text-red-600"
                 : totalSelisih > 0
                   ? "text-emerald-600"
-                  : "text-slate-400",
+                  : "text-[var(--text-tertiary)]",
           },
         ].map((item) => (
           <div
             key={item.label}
-            className="bg-slate-50 rounded-lg p-3 text-center"
+            className="bg-[var(--surface-hover)] rounded-lg p-3 text-center"
           >
-            <p className="text-xs text-slate-400 mb-1">{item.label}</p>
+            <p className="text-xs text-[var(--text-tertiary)] mb-1">{item.label}</p>
             <p className={`text-sm font-bold ${item.color}`}>
               {item.value >= 0 && item.label === "Selisih" ? "+" : ""}
               Rp {item.value.toLocaleString("id-ID")}
@@ -102,14 +102,14 @@ export default function SubmitPanel({
       )}
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-[var(--foreground)]">
           Keterangan Selisih
           {isVarianceExceeded ? (
             <span className="text-red-500 font-semibold ml-1">
               (wajib diisi)
             </span>
           ) : (
-            <span className="text-slate-400 font-normal ml-1">(opsional)</span>
+            <span className="text-[var(--text-tertiary)] font-normal ml-1">(opsional)</span>
           )}
         </label>
         <textarea
@@ -120,7 +120,7 @@ export default function SubmitPanel({
           className={`w-full px-3.5 py-2.5 rounded-lg border text-sm outline-none focus:ring-2 transition resize-none ${
             isVarianceExceeded && !varianceNote.trim()
               ? "border-red-300 focus:ring-red-400 bg-red-50/30"
-              : "border-slate-200 focus:ring-blue-500"
+              : "border-[var(--border)] focus:ring-blue-500"
           }`}
         />
         {isVarianceExceeded && !varianceNote.trim() && (
@@ -138,7 +138,7 @@ export default function SubmitPanel({
       <div className="flex justify-between pt-2">
         <button
           onClick={onBack}
-          className="text-slate-500 hover:text-slate-700 text-sm font-medium px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
+          className="text-[var(--muted)] hover:text-[var(--foreground)] text-sm font-medium px-4 py-2.5 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
         >
           ← Kembali
         </button>

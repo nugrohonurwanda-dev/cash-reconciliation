@@ -83,8 +83,8 @@ export default function ReviewPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Review Laporan</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-[var(--foreground)]">Review Laporan</h1>
+        <p className="text-[var(--muted)] text-sm mt-1">
           Review dan approve laporan kasir
         </p>
       </div>
@@ -98,7 +98,7 @@ export default function ReviewPage() {
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
               statusFilter === s
                 ? "bg-blue-600 text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                : "bg-[var(--surface)] border border-[var(--border)] text-[var(--muted)] hover:bg-[var(--surface-hover)]"
             }`}
           >
             {s === "" ? "Semua" : (STATUS_LABEL[s]?.label ?? s)}
@@ -107,40 +107,40 @@ export default function ReviewPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
+          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
             Memuat data...
           </div>
         ) : shifts.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-slate-400 text-sm">
+            <p className="text-[var(--text-tertiary)] text-sm">
               Tidak ada laporan yang perlu direview
             </p>
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
               <tr>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Tanggal
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Kasir
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Shift
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Jam Buka
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Modal Awal
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-slate-500 font-medium">
+                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
                   Aksi
                 </th>
               </tr>
@@ -155,9 +155,9 @@ export default function ReviewPage() {
                 return (
                   <tr
                     key={shift.id}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition"
+                    className="border-b border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
                   >
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
                       {new Date(shift.shift_date).toLocaleDateString("id-ID", {
                         weekday: "short",
                         day: "numeric",
@@ -165,28 +165,28 @@ export default function ReviewPage() {
                         year: "numeric",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {shift.opener?.full_name}
                       {isOwnShift && (
-                        <span className="ml-2 text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium">
+                        <span className="ml-2 text-xs bg-slate-100 text-[var(--muted)] px-1.5 py-0.5 rounded font-medium">
                           Shift saya
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ?? "-"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       {new Date(shift.opened_at).toLocaleTimeString("id-ID", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-[var(--muted)]">
                       Rp {parseInt(shift.modal_awal).toLocaleString("id-ID")}
                     </td>
                     <td className="px-4 py-3">
@@ -239,7 +239,7 @@ export default function ReviewPage() {
 
                         {/* Info kalau shift milik sendiri & masih PENDING */}
                         {isPending && isOwnShift && (
-                          <span className="text-xs text-slate-400 italic">
+                          <span className="text-xs text-[var(--text-tertiary)] italic">
                             Menunggu HC lain
                           </span>
                         )}
@@ -256,7 +256,7 @@ export default function ReviewPage() {
       {/* Modal Approve/Reject */}
       {actionShift && actionType && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
             {/* Header */}
             <div className="flex items-center gap-3">
               <div
@@ -293,28 +293,28 @@ export default function ReviewPage() {
                 )}
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-[var(--foreground)]">
                   {actionType === "APPROVE"
                     ? "Approve Laporan"
                     : "Tolak Laporan"}
                 </h2>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-[var(--muted)]">
                   Pastikan data sudah diperiksa
                 </p>
               </div>
             </div>
 
             {/* Ringkasan shift */}
-            <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
+            <div className="bg-[var(--surface-hover)] rounded-xl p-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500">Kasir</span>
-                <span className="font-medium text-slate-900">
+                <span className="text-[var(--muted)]">Kasir</span>
+                <span className="font-medium text-[var(--foreground)]">
                   {actionShift.opener?.full_name}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Tanggal</span>
-                <span className="font-medium text-slate-900">
+                <span className="text-[var(--muted)]">Tanggal</span>
+                <span className="font-medium text-[var(--foreground)]">
                   {new Date(actionShift.shift_date).toLocaleDateString(
                     "id-ID",
                     {
@@ -327,16 +327,16 @@ export default function ReviewPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Periode</span>
+                <span className="text-[var(--muted)]">Periode</span>
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[actionShift.shift_period]?.color ?? "bg-slate-100 text-slate-600"}`}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[actionShift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
                 >
                   {SHIFT_PERIOD_LABEL[actionShift.shift_period]?.label ?? "-"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Modal Awal</span>
-                <span className="font-medium text-slate-900">
+                <span className="text-[var(--muted)]">Modal Awal</span>
+                <span className="font-medium text-[var(--foreground)]">
                   Rp {parseInt(actionShift.modal_awal).toLocaleString("id-ID")}
                 </span>
               </div>
@@ -359,7 +359,7 @@ export default function ReviewPage() {
 
             {/* Textarea catatan */}
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-[var(--foreground)]">
                 {actionType === "REJECT"
                   ? "Alasan penolakan (wajib)"
                   : "Catatan (opsional)"}
@@ -380,7 +380,7 @@ export default function ReviewPage() {
                 className={`w-full px-3.5 py-2.5 rounded-lg border text-sm outline-none focus:ring-2 transition resize-none ${
                   actionType === "REJECT" && catatanTouched && !catatan.trim()
                     ? "border-red-400 focus:ring-red-300 bg-red-50"
-                    : "border-slate-200 focus:ring-blue-500"
+                    : "border-[var(--border)] focus:ring-blue-500"
                 }`}
               />
               {actionType === "REJECT" && catatanTouched && !catatan.trim() && (
@@ -398,7 +398,7 @@ export default function ReviewPage() {
                   setCatatanTouched(false);
                 }}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
               >
                 Batal
               </button>

@@ -15,9 +15,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
       <Sidebar user={session!.user} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" style={{ backgroundColor: "var(--background)" }}>
         <div className="p-6">{children}</div>
       </main>
     </div>

@@ -87,7 +87,7 @@ export default function LoginPage() {
 
             {/* Username */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">
+              <label className="text-sm font-semibold text-[var(--foreground)]">
                 Username
               </label>
               <div className="relative">
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-slate-700">
+              <label className="text-sm font-semibold text-[var(--foreground)]">
                 Password
               </label>
               <div className="relative">

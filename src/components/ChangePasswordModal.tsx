@@ -43,8 +43,8 @@ export default function ChangePasswordModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-        <h2 className="text-base font-bold text-slate-900">Ganti Password</h2>
+      <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+        <h2 className="text-base font-bold text-[var(--foreground)]">Ganti Password</h2>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -64,7 +64,7 @@ export default function ChangePasswordModal({
             { label: "Konfirmasi Password Baru", key: "confirm_password" },
           ].map(({ label, key }) => (
             <div key={key} className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-[var(--foreground)]">
                 {label}
               </label>
               <input
@@ -73,7 +73,7 @@ export default function ChangePasswordModal({
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, [key]: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                className="w-full px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
             </div>
           ))}
@@ -83,7 +83,7 @@ export default function ChangePasswordModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
           >
             Batal
           </button>

@@ -6,11 +6,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Custom token agar konsisten antara light & dark
-        surface: {
-          DEFAULT: '#f8fafc',
-          dark: '#0f172a',
-        },
+        // CSS variable tokens — bisa dipakai sebagai bg-background, text-foreground, dll
+        background:  'var(--background)',
+        surface:     'var(--surface)',
+        foreground:  'var(--foreground)',
+        muted:       'var(--muted)',
+        border:      'var(--border)',
+        primary:     'var(--primary)',
+        'surface-hover':   'var(--surface-hover)',
+        'surface-accent':  'var(--surface-accent)',
+        'text-secondary':  'var(--text-secondary)',
+        'text-tertiary':   'var(--text-tertiary)',
+      },
+      borderRadius: {
+        theme: 'var(--radius)',
       },
     },
   },

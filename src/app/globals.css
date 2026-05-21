@@ -11,6 +11,13 @@
   --border:     #e2e8f0;
   --primary:    #2563eb;
   --radius:     0.5rem;
+
+  /* Warna komponen tambahan */
+  --surface-hover:  #f1f5f9;
+  --surface-accent: #eff6ff;
+  --text-secondary: #475569;
+  --text-tertiary:  #94a3b8;
+  --shadow:         0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
 /* ── Dark mode variables ──────────────────────────────────────────────────── */
@@ -21,6 +28,13 @@
   --muted:      #94a3b8;
   --border:     #334155;
   --primary:    #3b82f6;
+
+  /* Warna komponen tambahan */
+  --surface-hover:  #273549;
+  --surface-accent: #1e3a5f;
+  --text-secondary: #94a3b8;
+  --text-tertiary:  #64748b;
+  --shadow:         0 1px 3px 0 rgb(0 0 0 / 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -35,8 +49,22 @@ body {
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar              { width: 6px; height: 6px; }
-::-webkit-scrollbar-track        { background: #f1f5f9; }
-::-webkit-scrollbar-thumb        { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover  { background: #94a3b8; }
-.dark ::-webkit-scrollbar-track  { background: #1e293b; }
-.dark ::-webkit-scrollbar-thumb  { background: #475569; }
+::-webkit-scrollbar-track        { background: var(--surface-hover); }
+::-webkit-scrollbar-thumb        { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover  { background: var(--muted); }
+
+/* ── Utility classes dark-aware ───────────────────────────────────────────── */
+/* Dipakai di page.tsx yang belum dikonversi penuh ke Tailwind dark: variant */
+.card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.page-bg {
+  background-color: var(--background);
+}
+
+.text-muted {
+  color: var(--muted);
+}

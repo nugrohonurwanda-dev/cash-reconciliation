@@ -56,19 +56,19 @@ export default function BukaShiftPage() {
     <div className="max-w-lg mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Buka Shift Baru</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-[var(--foreground)]">Buka Shift Baru</h1>
+        <p className="text-[var(--muted)] text-sm mt-1">
           Pilih periode shift dan konfirmasi modal awal
         </p>
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-6 space-y-5">
         {/* Info tanggal */}
-        <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+        <div className="bg-[var(--surface-hover)] rounded-lg p-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Tanggal</span>
-            <span className="font-medium text-slate-900">
+            <span className="text-[var(--muted)]">Tanggal</span>
+            <span className="font-medium text-[var(--foreground)]">
               {new Date().toLocaleDateString("id-ID", {
                 weekday: "long",
                 year: "numeric",
@@ -78,8 +78,8 @@ export default function BukaShiftPage() {
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">Jam Mulai</span>
-            <span className="font-medium text-slate-900">
+            <span className="text-[var(--muted)]">Jam Mulai</span>
+            <span className="font-medium text-[var(--foreground)]">
               {new Date().toLocaleTimeString("id-ID", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -99,7 +99,7 @@ export default function BukaShiftPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Pilih shift */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-[var(--foreground)]">
               Periode Shift
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -115,21 +115,21 @@ export default function BukaShiftPage() {
                     className={`flex flex-col items-start p-4 rounded-xl border-2 transition text-left ${
                       active
                         ? "border-blue-500 bg-blue-50"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                        : "border-[var(--border)] bg-[var(--surface)] hover:border-slate-300"
                     }`}
                   >
                     <span
-                      className={`text-sm font-semibold ${active ? "text-blue-700" : "text-slate-700"}`}
+                      className={`text-sm font-semibold ${active ? "text-blue-700" : "text-[var(--foreground)]"}`}
                     >
                       {opt.label}
                     </span>
                     <span
-                      className={`text-xs mt-0.5 ${active ? "text-blue-500" : "text-slate-400"}`}
+                      className={`text-xs mt-0.5 ${active ? "text-blue-500" : "text-[var(--text-tertiary)]"}`}
                     >
                       {opt.desc}
                     </span>
                     <span
-                      className={`text-xs font-medium mt-2 ${active ? "text-blue-600" : "text-slate-500"}`}
+                      className={`text-xs font-medium mt-2 ${active ? "text-blue-600" : "text-[var(--muted)]"}`}
                     >
                       {opt.jam}
                     </span>
@@ -147,22 +147,22 @@ export default function BukaShiftPage() {
 
           {/* Modal awal */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">
+            <label className="text-sm font-medium text-[var(--foreground)]">
               Modal Awal
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-sm font-medium">
                 Rp
               </span>
               <input
                 type="text"
                 value={modalAwal}
                 onChange={(e) => setModalAwal(formatRupiah(e.target.value))}
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 required
               />
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-tertiary)]">
               Default Rp 1.000.000 — ubah jika diperlukan
             </p>
           </div>
@@ -171,7 +171,7 @@ export default function BukaShiftPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+              className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
             >
               Batal
             </button>
