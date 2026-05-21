@@ -669,22 +669,22 @@ export default function ShiftDetailPage() {
   }
 
   function updateEsbLine(
-    index: number,
+    key: string,
     field: keyof TransactionLine,
     value: string,
   ) {
     setEsbLines((prev) =>
-      prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)),
+      prev.map((l) => (l.kategori === key ? { ...l, [field]: value } : l)),
     );
   }
 
   function updateFisikLine(
-    index: number,
+    key: string,
     field: keyof TransactionLine,
     value: string,
   ) {
     setFisikLines((prev) =>
-      prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)),
+      prev.map((l) => (l.kategori === key ? { ...l, [field]: value } : l)),
     );
   }
 

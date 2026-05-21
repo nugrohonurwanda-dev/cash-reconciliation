@@ -62,10 +62,6 @@ function findLine(
   return lines.find((l) => l.kategori === key);
 }
 
-/** Cari index line berdasarkan kategori key — untuk update handler */
-function findIdx(lines: TransactionLine[], key: string): number {
-  return lines.findIndex((l) => l.kategori === key);
-}
 
 function subtotalGroup(lines: TransactionLine[], keys: readonly string[]): number {
   return keys.reduce((sum, key) => {
@@ -114,8 +110,8 @@ function InputRupiah({
 type EsbFisikFormProps = {
   esbLines: TransactionLine[];
   fisikLines: TransactionLine[];
-  updateEsbLine: (index: number, field: keyof TransactionLine, value: string) => void;
-  updateFisikLine: (index: number, field: keyof TransactionLine, value: string) => void;
+  updateEsbLine: (key: string, field: keyof TransactionLine, value: string) => void;
+  updateFisikLine: (key: string, field: keyof TransactionLine, value: string) => void;
   saveTransactions: (sumber: "ESB" | "FISIK") => void;
   saving: boolean;
   activeTab: Tab;
@@ -154,7 +150,6 @@ function EsbTab({
               {/* Baris item */}
               {group.items.map((item) => {
                 const line = findLine(esbLines, item.key);
-                const idx = findIdx(esbLines, item.key);
 
                 // Jika line belum ada di array (shift baru), tampilkan input kosong
                 const nilai = line?.nilai ?? "";
@@ -171,18 +166,14 @@ function EsbTab({
                     <div className="col-span-5 pr-3">
                       <InputRupiah
                         value={nilai}
-                        onChange={(v) => {
-                          if (idx >= 0) updateEsbLine(idx, "nilai", v);
-                        }}
+                        onChange={(v) => updateEsbLine(item.key, "nilai", v)}
                       />
                     </div>
                     <div className="col-span-3">
                       <input
                         type="text"
                         value={catatan}
-                        onChange={(e) => {
-                          if (idx >= 0) updateEsbLine(idx, "catatan", e.target.value);
-                        }}
+                        onChange={(e) => updateEsbLine(item.key, "catatan", e.target.value)}
                         placeholder="Opsional"
                         className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
                       />
@@ -280,7 +271,6 @@ function FisikTab({
               {group.items.map((item) => {
                 const fisikLine = findLine(fisikLines, item.key);
                 const esbLine = findLine(esbLines, item.key);
-                const idx = findIdx(fisikLines, item.key);
 
                 const esb = parseRupiah(esbLine?.nilai ?? "0");
                 const fisikNilai = fisikLine?.nilai ?? "";
@@ -304,9 +294,7 @@ function FisikTab({
                     <div className="col-span-3 pr-3">
                       <InputRupiah
                         value={fisikNilai}
-                        onChange={(v) => {
-                          if (idx >= 0) updateFisikLine(idx, "nilai", v);
-                        }}
+                        onChange={(v) => updateFisikLine(item.key, "nilai", v)}
                       />
                     </div>
                     {/* Selisih realtime */}
