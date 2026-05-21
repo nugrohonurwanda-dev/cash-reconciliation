@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatRupiah, parseRupiah } from "@/utils/format";
-import EsbFisikForm from "@/components/shifts/EsbFisikForm";
+import EsbFisikForm, { KATEGORI_LIST } from "@/components/shifts/EsbFisikForm";
 import SpecialLogsPanel from "@/components/shifts/SpecialLogsPanel";
 import SubmitPanel from "@/components/shifts/SubmitPanel";
 import type {
@@ -23,14 +23,6 @@ import type {
 void (0 as unknown as KategoriSummary);
 void (0 as unknown as ShiftTotals);
 void (0 as unknown as DailyAccumulation);
-
-const KATEGORI = [
-  "CASH",
-  "EDC_DEBIT",
-  "EDC_KREDIT",
-  "QRIS",
-  "TRANSFER",
-] as const;
 
 // ─────────────────────────────────────────────────────────────
 // Small local components (unchanged from original)
@@ -61,10 +53,20 @@ function StatusBadge({ status }: { status: string }) {
 
 const KATEGORI_LABEL_RO: Record<string, string> = {
   CASH: "Cash",
-  EDC_DEBIT: "EDC Debit",
-  EDC_KREDIT: "EDC Kredit",
-  QRIS: "QRIS",
-  TRANSFER: "Transfer",
+  EDC_BRI: "EDC BRI",
+  EDC_BNI: "EDC BNI",
+  EDC_BCA: "EDC BCA",
+  EDC_BSI: "EDC BSI",
+  QRIS_BRI: "QRIS BRI",
+  QRIS_BNI: "QRIS BNI",
+  QRIS_BCA: "QRIS BCA",
+  QRIS_BSI: "QRIS BSI",
+  TRANSFER_BRI: "Transfer BRI",
+  TRANSFER_BNI: "Transfer BNI",
+  TRANSFER_BCA: "Transfer BCA",
+  TRANSFER_BSI: "Transfer BSI",
+  DEPOSIT_BANK: "Deposit Bank",
+  DEPOSIT_CASH: "Deposit Cash",
 };
 
 const ACTION_LABEL: Record<string, string> = {
@@ -95,10 +97,20 @@ function DailyAccumulationCard({
 
   const LABEL: Record<string, string> = {
     CASH: "Cash",
-    EDC_DEBIT: "EDC Debit",
-    EDC_KREDIT: "EDC Kredit",
-    QRIS: "QRIS",
-    TRANSFER: "Transfer",
+    EDC_BRI: "EDC BRI",
+    EDC_BNI: "EDC BNI",
+    EDC_BCA: "EDC BCA",
+    EDC_BSI: "EDC BSI",
+    QRIS_BRI: "QRIS BRI",
+    QRIS_BNI: "QRIS BNI",
+    QRIS_BCA: "QRIS BCA",
+    QRIS_BSI: "QRIS BSI",
+    TRANSFER_BRI: "Transfer BRI",
+    TRANSFER_BNI: "Transfer BNI",
+    TRANSFER_BCA: "Transfer BCA",
+    TRANSFER_BSI: "Transfer BSI",
+    DEPOSIT_BANK: "Deposit Bank",
+    DEPOSIT_CASH: "Deposit Cash",
   };
 
   return (
@@ -180,7 +192,7 @@ function DailyAccumulationCard({
 function ReadOnlyView({ shift }: { shift: Shift }) {
   const router = useRouter();
 
-  const categories = ["CASH", "EDC_DEBIT", "EDC_KREDIT", "QRIS", "TRANSFER"];
+  const categories = KATEGORI_LIST;
   const lines = shift.transaction_lines ?? [];
 
   const recon = categories.map((k) => {
@@ -500,7 +512,7 @@ export default function ShiftDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const emptyLines = useCallback(
-    () => KATEGORI.map((k) => ({ kategori: k, nilai: "", catatan: "" })),
+    () => KATEGORI_LIST.map((k) => ({ kategori: k, nilai: "", catatan: "" })),
     [],
   );
 
@@ -534,13 +546,6 @@ export default function ShiftDetailPage() {
         setVarianceNote(data.data.variance_note ?? "");
 
         const tl = data.data.transaction_lines ?? [];
-        const KATEGORI_LIST = [
-          "CASH",
-          "EDC_DEBIT",
-          "EDC_KREDIT",
-          "QRIS",
-          "TRANSFER",
-        ] as const;
         const toLines = (sumber: "ESB" | "FISIK") =>
           KATEGORI_LIST.map((k) => {
             const found = tl.find(

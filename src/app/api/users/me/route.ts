@@ -1,20 +1,46 @@
+// src/app/api/users/me/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 
-const Schema = z.object({
-  current_password: z.string().min(1).max(128),
-  new_password: z.string().min(8).max(128),
+const UpdateMeSchema = z.object({
+  full_name: z.string().min(1, "Nama tidak boleh kosong").max(100).trim(),
 });
 
-export async function POST(req: NextRequest) {
+// ─── GET /api/users/me ────────────────────────────────────────────────────────
+// Digunakan oleh Sidebar untuk menampilkan nama & username user yang login
+export async function GET() {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  const user = await prisma.user.findUnique({
+    where: { id: session!.user.id },
+    select: {
+      id: true,
+      username: true,
+      full_name: true,
+      role: true,
+      is_active: true,
+    },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: "User tidak ditemukan." }, { status: 404 });
+  }
+
+  return NextResponse.json({ data: user });
+}
+
+// ─── PATCH /api/users/me ──────────────────────────────────────────────────────
+// Digunakan oleh EditProfileModal untuk update nama lengkap
+export async function PATCH(req: NextRequest) {
   const { session, error } = await requireSession();
   if (error) return error;
 
   const body = await req.json();
-  const parsed = Schema.safeParse(body);
+  const parsed = UpdateMeSchema.safeParse(body);
+
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Input tidak valid", details: parsed.error.flatten() },
@@ -22,38 +48,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.user.update({
     where: { id: session!.user.id },
-  });
-  if (!user)
-    return NextResponse.json(
-      { error: "User tidak ditemukan." },
-      { status: 404 },
-    );
-
-  const isValid = await bcrypt.compare(
-    parsed.data.current_password,
-    user.password_hash,
-  );
-  if (!isValid) {
-    return NextResponse.json(
-      { error: "Password lama tidak sesuai." },
-      { status: 400 },
-    );
-  }
-
-  if (parsed.data.current_password === parsed.data.new_password) {
-    return NextResponse.json(
-      { error: "Password baru tidak boleh sama dengan password lama." },
-      { status: 400 },
-    );
-  }
-
-  const password_hash = await bcrypt.hash(parsed.data.new_password, 12);
-  await prisma.user.update({
-    where: { id: session!.user.id },
-    data: { password_hash },
+    data: { full_name: parsed.data.full_name },
+    select: {
+      id: true,
+      username: true,
+      full_name: true,
+      role: true,
+    },
   });
 
-  return NextResponse.json({ message: "Password berhasil diubah." });
+  return NextResponse.json({ data: user, message: "Profil berhasil diperbarui." });
 }
