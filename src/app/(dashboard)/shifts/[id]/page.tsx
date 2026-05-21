@@ -5,9 +5,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { formatRupiah, parseRupiah } from "@/utils/format";
-import EsbFisikForm, { KATEGORI_LIST } from "@/components/shifts/EsbFisikForm";
+import EsbFisikForm from "@/components/shifts/SpecialLogsPanel"; 
 import SpecialLogsPanel from "@/components/shifts/SpecialLogsPanel";
 import SubmitPanel from "@/components/shifts/SubmitPanel";
+
 import type {
   Tab,
   TransactionLine,
@@ -19,7 +20,6 @@ import type {
 } from "@/types/shift";
 
 // ─── Suppress unused-import warnings for types only used implicitly ──────────
-// (KategoriSummary, ShiftTotals, DailyAccumulation are used via Shift type)
 void (0 as unknown as KategoriSummary);
 void (0 as unknown as ShiftTotals);
 void (0 as unknown as DailyAccumulation);
@@ -50,6 +50,24 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
+
+const KATEGORI_LIST = [
+  "CASH",
+  "EDC_BRI",
+  "EDC_BNI",
+  "EDC_BCA",
+  "EDC_BSI",
+  "QRIS_BRI",
+  "QRIS_BNI",
+  "QRIS_BCA",
+  "QRIS_BSI",
+  "TRANSFER_BRI",
+  "TRANSFER_BNI",
+  "TRANSFER_BCA",
+  "TRANSFER_BSI",
+  "DEPOSIT_BANK",
+  "DEPOSIT_CASH",
+];
 
 const KATEGORI_LABEL_RO: Record<string, string> = {
   CASH: "Cash",
@@ -860,7 +878,6 @@ export default function ShiftDetailPage() {
     { key: "submit", label: "4. Submit" },
   ];
 
-  // Hitung totals untuk SubmitPanel
   const totalEsb = esbLines.reduce(
     (sum, l) => sum + parseRupiah(l.nilai || "0"),
     0,
