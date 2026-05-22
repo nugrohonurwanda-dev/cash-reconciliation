@@ -33,7 +33,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200 rounded-full opacity-20 blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200 rounded-full opacity-20 blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none" />
@@ -56,16 +56,16 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Cash Reconciliation
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
             Sistem Rekonsiliasi Kas Digital
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-100 p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-slate-200/80 dark:shadow-slate-900/80 border border-slate-100 dark:border-slate-700 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Error */}
             {error && (
@@ -87,7 +87,7 @@ export default function LoginPage() {
 
             {/* Username */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[var(--foreground)]">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Username
               </label>
               <div className="relative">
@@ -111,14 +111,14 @@ export default function LoginPage() {
                   placeholder="Masukkan username"
                   required
                   autoFocus
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:bg-white dark:focus:bg-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-[var(--foreground)]">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Password
               </label>
               <div className="relative">
@@ -141,7 +141,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Masukkan password"
                   required
-                  className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  className="w-full pl-10 pr-11 py-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:bg-white dark:focus:bg-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 />
                 <button
                   type="button"
@@ -238,14 +238,14 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <p className="text-xs text-slate-400 text-center">
+          <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-700">
+            <p className="text-xs text-slate-400 dark:text-slate-500 text-center">
               Hubungi Finance untuk reset password
             </p>
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-5">
+        <p className="text-center text-xs text-slate-400 dark:text-slate-600 mt-5">
           Cash Reconciliation Management System v1.0
         </p>
       </div>
