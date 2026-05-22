@@ -12,10 +12,19 @@ import {
   Shift,
   SubmitTotals,
 } from "@/types/shift";
-import EsbFisikForm, { KATEGORI_LIST } from "@/components/shifts/EsbFisikForm";
+import EsbFisikForm from "@/components/shifts/EsbFisikForm";
 import SpecialLogsPanel from "@/components/shifts/SpecialLogsPanel";
 import SubmitPanel from "@/components/shifts/SubmitPanel";
 
+
+// ─── 15 kategori payment — harus sama dengan PaymentCategory enum Prisma ──────
+const KATEGORI_LIST: string[] = [
+  "CASH",
+  "EDC_BRI", "EDC_BNI", "EDC_BCA", "EDC_BSI",
+  "QRIS_BRI", "QRIS_BNI", "QRIS_BCA", "QRIS_BSI",
+  "TRANSFER_BRI", "TRANSFER_BNI", "TRANSFER_BCA", "TRANSFER_BSI",
+  "DEPOSIT_BANK", "DEPOSIT_CASH",
+];
 // ─── Helper Components (kept in page — used only in page-level JSX) ───────────
 
 function InputRupiah({
@@ -29,7 +38,7 @@ function InputRupiah({
 }) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-sm">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
         Rp
       </span>
       <input
@@ -37,7 +46,7 @@ function InputRupiah({
         value={value}
         onChange={(e) => onChange(formatRupiah(e.target.value))}
         placeholder={placeholder}
-        className="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
       />
     </div>
   );
@@ -51,11 +60,11 @@ function StatusBadge({ status }: { status: string }) {
       label: "Menunggu Finance",
       color: "bg-violet-100 text-violet-700",
     },
-    CLOSED: { label: "Closed", color: "bg-slate-100 text-[var(--muted)]" },
+    CLOSED: { label: "Closed", color: "bg-slate-100 text-slate-600" },
   };
   const c = config[status] ?? {
     label: status,
-    color: "bg-slate-100 text-[var(--muted)]",
+    color: "bg-slate-100 text-slate-600",
   };
   return (
     <span
@@ -103,7 +112,7 @@ function DailyAccumulationCard({ data }: { data: any }) {
     const n = parseInt(v);
     if (n < 0) return "text-red-600";
     if (n > 0) return "text-emerald-600";
-    return "text-[var(--text-tertiary)]";
+    return "text-slate-400";
   };
 
   const LABEL: Record<string, string> = {
@@ -125,7 +134,7 @@ function DailyAccumulationCard({ data }: { data: any }) {
   };
 
   return (
-    <div className="bg-[var(--surface)] rounded-xl border border-violet-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-violet-200 overflow-hidden">
       <div className="px-5 py-4 border-b border-violet-100 bg-violet-50">
         <h3 className="text-sm font-semibold text-violet-800">
           Rekap Akumulasi Hari Ini
@@ -135,7 +144,7 @@ function DailyAccumulationCard({ data }: { data: any }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-4 px-5 py-2 text-xs font-medium text-[var(--text-tertiary)] border-b border-[var(--border)]">
+      <div className="grid grid-cols-4 px-5 py-2 text-xs font-medium text-slate-400 border-b border-slate-100">
         <span>Kategori</span>
         <span className="text-right">Shift 1</span>
         <span className="text-right">Shift 2</span>
@@ -161,14 +170,14 @@ function DailyAccumulationCard({ data }: { data: any }) {
               key={row.kategori}
               className="grid grid-cols-4 px-5 py-3 text-sm"
             >
-              <span className="text-[var(--muted)]">{LABEL[row.kategori]}</span>
-              <span className="text-right text-[var(--muted)]">
+              <span className="text-slate-600">{LABEL[row.kategori]}</span>
+              <span className="text-right text-slate-500">
                 {s1Val > 0 ? `Rp ${s1Val.toLocaleString("id-ID")}` : "—"}
               </span>
-              <span className="text-right text-[var(--muted)]">
+              <span className="text-right text-slate-500">
                 {s2Val > 0 ? `Rp ${s2Val.toLocaleString("id-ID")}` : "—"}
               </span>
-              <span className="text-right font-medium text-[var(--foreground)]">
+              <span className="text-right font-medium text-slate-800">
                 {total > 0 ? `Rp ${total.toLocaleString("id-ID")}` : "—"}
               </span>
             </div>
@@ -176,21 +185,21 @@ function DailyAccumulationCard({ data }: { data: any }) {
         })}
       </div>
 
-      <div className="border-t border-[var(--border)] bg-[var(--surface-hover)] px-5 py-4 space-y-2">
+      <div className="border-t border-slate-200 bg-slate-50 px-5 py-4 space-y-2">
         <div className="flex justify-between text-sm">
-          <span className="text-[var(--muted)]">Total ESB (gabungan)</span>
-          <span className="font-medium text-[var(--foreground)]">
+          <span className="text-slate-500">Total ESB (gabungan)</span>
+          <span className="font-medium text-slate-800">
             {fmt(data.combined.total_esb)}
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-[var(--muted)]">Total Fisik (gabungan)</span>
-          <span className="font-medium text-[var(--foreground)]">
+          <span className="text-slate-500">Total Fisik (gabungan)</span>
+          <span className="font-medium text-slate-800">
             {fmt(data.combined.total_fisik)}
           </span>
         </div>
-        <div className="flex justify-between text-sm font-semibold pt-2 border-t border-[var(--border)]">
-          <span className="text-[var(--foreground)]">Selisih Keseluruhan</span>
+        <div className="flex justify-between text-sm font-semibold pt-2 border-t border-slate-200">
+          <span className="text-slate-700">Selisih Keseluruhan</span>
           <span className={selisihColor(data.combined.total_selisih)}>
             {fmt(data.combined.total_selisih)}
           </span>
@@ -208,7 +217,7 @@ function ReadOnlyView({ shift }: { shift: any }) {
   const categories = KATEGORI_LIST;
   const lines = shift.transaction_lines ?? [];
 
-  const recon = categories.map((k) => {
+  const recon = categories.map((k: string) => {
     const esb = lines
       .filter((l: any) => l.sumber === "ESB" && l.kategori === k)
       .reduce((sum: number, l: any) => sum + parseFloat(l.nilai), 0);
@@ -218,8 +227,8 @@ function ReadOnlyView({ shift }: { shift: any }) {
     return { kategori: k, esb, fisik, selisih: fisik - esb };
   });
 
-  const totalEsb = recon.reduce((sum, r) => sum + r.esb, 0);
-  const totalFisik = recon.reduce((sum, r) => sum + r.fisik, 0);
+  const totalEsb = recon.reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.esb, 0);
+  const totalFisik = recon.reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.fisik, 0);
   const totalSelisih = totalFisik - totalEsb;
 
   const specialLogs = shift.special_logs ?? [];
@@ -251,62 +260,62 @@ function ReadOnlyView({ shift }: { shift: any }) {
         </div>
       )}
 
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
-        <div className="px-5 py-4 border-b border-[var(--border)]">
-          <h2 className="text-sm font-semibold text-[var(--foreground)]">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <h2 className="text-sm font-semibold text-slate-900">
             Rekonsiliasi per Kategori
           </h2>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-[var(--surface-hover)]">
+          <thead className="bg-slate-50">
             <tr>
-              <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+              <th className="text-left px-4 py-3 text-slate-500 font-medium">
                 Kategori
               </th>
-              <th className="text-right px-4 py-3 text-[var(--muted)] font-medium">
+              <th className="text-right px-4 py-3 text-slate-500 font-medium">
                 Nilai ESB
               </th>
-              <th className="text-right px-4 py-3 text-[var(--muted)] font-medium">
+              <th className="text-right px-4 py-3 text-slate-500 font-medium">
                 Nilai Fisik
               </th>
-              <th className="text-right px-4 py-3 text-[var(--muted)] font-medium">
+              <th className="text-right px-4 py-3 text-slate-500 font-medium">
                 Selisih
               </th>
             </tr>
           </thead>
           <tbody>
-            {recon.map((r, i) => (
+            {recon.map((r: {kategori: string; esb: number; fisik: number; selisih: number}, i: number) => (
               <tr
                 key={r.kategori}
-                className={`border-t border-[var(--border)] ${i % 2 === 1 ? "bg-slate-50/50" : ""}`}
+                className={`border-t border-slate-100 ${i % 2 === 1 ? "bg-slate-50/50" : ""}`}
               >
-                <td className="px-4 py-3 font-medium text-[var(--foreground)]">
+                <td className="px-4 py-3 font-medium text-slate-700">
                   {KATEGORI_LABEL_RO[r.kategori]}
                 </td>
-                <td className="px-4 py-3 text-right text-[var(--muted)]">
+                <td className="px-4 py-3 text-right text-slate-600">
                   {fmt(r.esb)}
                 </td>
-                <td className="px-4 py-3 text-right text-[var(--muted)]">
+                <td className="px-4 py-3 text-right text-slate-600">
                   {fmt(r.fisik)}
                 </td>
                 <td
-                  className={`px-4 py-3 text-right font-semibold ${r.selisih < 0 ? "text-red-600" : r.selisih > 0 ? "text-emerald-600" : "text-[var(--text-tertiary)]"}`}
+                  className={`px-4 py-3 text-right font-semibold ${r.selisih < 0 ? "text-red-600" : r.selisih > 0 ? "text-emerald-600" : "text-slate-400"}`}
                 >
                   {r.selisih >= 0 ? "+" : ""}
                   {fmt(r.selisih)}
                 </td>
               </tr>
             ))}
-            <tr className="border-t-2 border-[var(--border)] bg-blue-50">
-              <td className="px-4 py-3 font-bold text-[var(--foreground)]">TOTAL</td>
-              <td className="px-4 py-3 text-right font-bold text-[var(--foreground)]">
+            <tr className="border-t-2 border-slate-200 bg-blue-50">
+              <td className="px-4 py-3 font-bold text-slate-900">TOTAL</td>
+              <td className="px-4 py-3 text-right font-bold text-slate-900">
                 {fmt(totalEsb)}
               </td>
-              <td className="px-4 py-3 text-right font-bold text-[var(--foreground)]">
+              <td className="px-4 py-3 text-right font-bold text-slate-900">
                 {fmt(totalFisik)}
               </td>
               <td
-                className={`px-4 py-3 text-right font-bold ${totalSelisih < 0 ? "text-red-600" : totalSelisih > 0 ? "text-emerald-600" : "text-[var(--text-tertiary)]"}`}
+                className={`px-4 py-3 text-right font-bold ${totalSelisih < 0 ? "text-red-600" : totalSelisih > 0 ? "text-emerald-600" : "text-slate-400"}`}
               >
                 {totalSelisih >= 0 ? "+" : ""}
                 {fmt(totalSelisih)}
@@ -337,9 +346,9 @@ function ReadOnlyView({ shift }: { shift: any }) {
         ].map((item) => (
           <div
             key={item.label}
-            className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4"
+            className="bg-white rounded-xl border border-slate-200 p-4"
           >
-            <p className="text-xs text-[var(--text-tertiary)]">{item.label}</p>
+            <p className="text-xs text-slate-400">{item.label}</p>
             <p className={`text-lg font-bold mt-1 ${item.color}`}>
               {fmt(item.value)}
             </p>
@@ -348,7 +357,7 @@ function ReadOnlyView({ shift }: { shift: any }) {
       </div>
 
       <div className="bg-slate-900 rounded-xl p-5 flex items-center justify-between">
-        <p className="text-[var(--text-tertiary)] text-sm">Total Omzet Bersih</p>
+        <p className="text-slate-400 text-sm">Total Omzet Bersih</p>
         <p className="text-white text-2xl font-bold">{fmt(totalOmzetBersih)}</p>
       </div>
 
@@ -369,29 +378,29 @@ function ReadOnlyView({ shift }: { shift: any }) {
       )}
 
       {specialLogs.length > 0 && (
-        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-[var(--border)]">
-            <h2 className="text-sm font-semibold text-[var(--foreground)]">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-semibold text-slate-900">
               Special Logs
             </h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-[var(--surface-hover)]">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Tipe
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Detail
                 </th>
-                <th className="text-right px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-right px-4 py-3 text-slate-500 font-medium">
                   Nominal
                 </th>
               </tr>
             </thead>
             <tbody>
               {specialLogs.map((log: any) => (
-                <tr key={log.id} className="border-t border-[var(--border)]">
+                <tr key={log.id} className="border-t border-slate-100">
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
@@ -407,14 +416,14 @@ function ReadOnlyView({ shift }: { shift: any }) {
                       {log.tipe}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[var(--muted)]">
+                  <td className="px-4 py-3 text-slate-600">
                     {log.tipe === "VOID" || log.tipe === "DISCOUNT"
                       ? `Bill: ${log.nomor_bill ?? "-"} — ${log.alasan ?? "-"}`
                       : log.tipe === "DEPOSIT"
                         ? `${log.nama_member ?? "-"} (${log.metode ?? "-"})`
                         : `${log.kategori_biaya ?? "-"} — ${log.keterangan ?? "-"}`}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-[var(--foreground)]">
+                  <td className="px-4 py-3 text-right font-medium text-slate-900">
                     {fmt(parseFloat(log.nominal))}
                   </td>
                 </tr>
@@ -425,39 +434,39 @@ function ReadOnlyView({ shift }: { shift: any }) {
       )}
 
       {shift.approvals?.length > 0 && (
-        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-[var(--border)]">
-            <h2 className="text-sm font-semibold text-[var(--foreground)]">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <h2 className="text-sm font-semibold text-slate-900">
               Approval Trail
             </h2>
           </div>
           <table className="w-full text-sm">
-            <thead className="bg-[var(--surface-hover)]">
+            <thead className="bg-slate-50">
               <tr>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Nama
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Role
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Aksi
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Waktu
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 text-slate-500 font-medium">
                   Catatan
                 </th>
               </tr>
             </thead>
             <tbody>
               {shift.approvals.map((a: any) => (
-                <tr key={a.id} className="border-t border-[var(--border)]">
-                  <td className="px-4 py-3 font-medium text-[var(--foreground)]">
+                <tr key={a.id} className="border-t border-slate-100">
+                  <td className="px-4 py-3 font-medium text-slate-900">
                     {a.approver?.full_name}
                   </td>
-                  <td className="px-4 py-3 text-[var(--muted)]">
+                  <td className="px-4 py-3 text-slate-600">
                     {ROLE_LABEL[a.approver?.role] ?? a.approver?.role}
                   </td>
                   <td className="px-4 py-3">
@@ -467,13 +476,13 @@ function ReadOnlyView({ shift }: { shift: any }) {
                           ? "bg-emerald-100 text-emerald-700"
                           : a.action === "REJECT"
                             ? "bg-red-100 text-red-700"
-                            : "bg-slate-100 text-[var(--muted)]"
+                            : "bg-slate-100 text-slate-600"
                       }`}
                     >
                       {ACTION_LABEL[a.action] ?? a.action}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-[var(--muted)]">
+                  <td className="px-4 py-3 text-slate-600">
                     {new Date(a.timestamp).toLocaleString("id-ID", {
                       day: "numeric",
                       month: "short",
@@ -482,7 +491,7 @@ function ReadOnlyView({ shift }: { shift: any }) {
                       minute: "2-digit",
                     })}
                   </td>
-                  <td className="px-4 py-3 text-[var(--muted)]">
+                  <td className="px-4 py-3 text-slate-500">
                     {a.catatan ?? "-"}
                   </td>
                 </tr>
@@ -495,7 +504,7 @@ function ReadOnlyView({ shift }: { shift: any }) {
       <div className="flex justify-between items-center pt-2">
         <button
           onClick={() => router.back()}
-          className="text-[var(--muted)] hover:text-[var(--foreground)] text-sm font-medium px-4 py-2.5 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
+          className="text-slate-500 hover:text-slate-700 text-sm font-medium px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
         >
           ← Kembali
         </button>
@@ -526,7 +535,7 @@ export default function ShiftDetailPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const emptyLines = useCallback(
-    () => KATEGORI_LIST.map((k) => ({ kategori: k, nilai: "", catatan: "" })),
+    () => KATEGORI_LIST.map((k: string) => ({ kategori: k, nilai: "", catatan: "" })),
     [],
   );
 
@@ -562,7 +571,7 @@ export default function ShiftDetailPage() {
 
         const tl = data.data.transaction_lines ?? [];
         const toLines = (sumber: "ESB" | "FISIK") =>
-          KATEGORI_LIST.map((k) => {
+          KATEGORI_LIST.map((k: string) => {
             const found = tl.find(
               (l: any) => l.sumber === sumber && l.kategori === k,
             );
@@ -669,22 +678,22 @@ export default function ShiftDetailPage() {
   }
 
   function updateEsbLine(
-    key: string,
+    index: number,
     field: keyof TransactionLine,
     value: string,
   ) {
     setEsbLines((prev) =>
-      prev.map((l) => (l.kategori === key ? { ...l, [field]: value } : l)),
+      prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)),
     );
   }
 
   function updateFisikLine(
-    key: string,
+    index: number,
     field: keyof TransactionLine,
     value: string,
   ) {
     setFisikLines((prev) =>
-      prev.map((l) => (l.kategori === key ? { ...l, [field]: value } : l)),
+      prev.map((l, i) => (i === index ? { ...l, [field]: value } : l)),
     );
   }
 
@@ -751,15 +760,9 @@ export default function ShiftDetailPage() {
           nominal: parseRupiah(l.nominal),
           alasan: l.alasan,
         })),
-      ...depositLogs
-        .filter((l) => l.nominal)
-        .map((l) => ({
-          tipe: "DEPOSIT",
-          nama_member: l.nama_member,
-          nominal: parseRupiah(l.nominal),
-          metode: l.metode || "CASH",
-          nomor_referensi: l.nomor_referensi,
-        })),
+      // NOTE: depositLogs TIDAK dikirim ke /special-logs.
+      // Deposit sudah di-handle via TransactionLine kategori
+      // DEPOSIT_BANK / DEPOSIT_CASH di tab ESB & Fisik.
       ...otherCostLogs
         .filter((l) => l.nominal)
         .map((l) => ({
@@ -882,7 +885,7 @@ export default function ShiftDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-[var(--text-tertiary)] text-sm">Memuat data shift...</div>
+        <div className="text-slate-400 text-sm">Memuat data shift...</div>
       </div>
     );
   }
@@ -904,8 +907,8 @@ export default function ShiftDetailPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Detail Shift</h1>
-          <p className="text-[var(--muted)] text-sm mt-1">
+          <h1 className="text-2xl font-bold text-slate-900">Detail Shift</h1>
+          <p className="text-slate-500 text-sm mt-1">
             {new Date(shift?.shift_date).toLocaleDateString("id-ID", {
               weekday: "long",
               year: "numeric",
@@ -918,16 +921,16 @@ export default function ShiftDetailPage() {
       </div>
 
       {/* Shift info card */}
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 grid grid-cols-3 gap-4 text-sm">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 grid grid-cols-3 gap-4 text-sm">
         <div>
-          <p className="text-[var(--text-tertiary)]">Kasir</p>
-          <p className="font-medium text-[var(--foreground)] mt-0.5">
+          <p className="text-slate-400">Kasir</p>
+          <p className="font-medium text-slate-900 mt-0.5">
             {shift?.opener?.full_name}
           </p>
         </div>
         <div>
-          <p className="text-[var(--text-tertiary)]">Jam Buka</p>
-          <p className="font-medium text-[var(--foreground)] mt-0.5">
+          <p className="text-slate-400">Jam Buka</p>
+          <p className="font-medium text-slate-900 mt-0.5">
             {new Date(shift?.opened_at).toLocaleTimeString("id-ID", {
               hour: "2-digit",
               minute: "2-digit",
@@ -935,8 +938,8 @@ export default function ShiftDetailPage() {
           </p>
         </div>
         <div>
-          <p className="text-[var(--text-tertiary)]">Modal Awal</p>
-          <p className="font-medium text-[var(--foreground)] mt-0.5">
+          <p className="text-slate-400">Modal Awal</p>
+          <p className="font-medium text-slate-900 mt-0.5">
             {formatModalAwal(shift?.modal_awal)}
           </p>
         </div>
@@ -981,14 +984,14 @@ export default function ShiftDetailPage() {
 
       {/* Draft expired banner */}
       {draftExpired && (
-        <div className="bg-[var(--surface-hover)] border border-[var(--border)] rounded-lg px-4 py-3 flex items-center justify-between">
-          <p className="text-sm text-[var(--muted)]">
+        <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-slate-600">
             Draft input sebelumnya sudah kedaluarsa dan telah dihapus otomatis.
             Silakan isi ulang data shift.
           </p>
           <button
             onClick={() => setDraftExpired(false)}
-            className="text-xs text-[var(--text-tertiary)] hover:text-[var(--muted)] font-medium ml-4 shrink-0"
+            className="text-xs text-slate-400 hover:text-slate-600 font-medium ml-4 shrink-0"
           >
             Tutup
           </button>
@@ -997,9 +1000,9 @@ export default function ShiftDetailPage() {
 
       {/* Tab form — only shown when OPEN */}
       {!isClosed && !isPending && (
-        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           {/* Tab navigation */}
-          <div className="flex border-b border-[var(--border)]">
+          <div className="flex border-b border-slate-200">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -1007,7 +1010,7 @@ export default function ShiftDetailPage() {
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === tab.key
                     ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                    : "text-slate-500 hover:text-slate-700"
                 }`}
               >
                 {tab.label}
@@ -1033,10 +1036,8 @@ export default function ShiftDetailPage() {
             {activeTab === "special" && (
               <SpecialLogsPanel
                 voidDiscountLogs={voidDiscountLogs}
-                depositLogs={depositLogs}
                 otherCostLogs={otherCostLogs}
                 setVoidDiscountLogs={setVoidDiscountLogs}
-                setDepositLogs={setDepositLogs}
                 setOtherCostLogs={setOtherCostLogs}
                 saveSpecialLogs={saveSpecialLogs}
                 saving={saving}
@@ -1063,7 +1064,7 @@ export default function ShiftDetailPage() {
       {/* Confirmation modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--surface)] rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
                 <svg
@@ -1081,25 +1082,25 @@ export default function ShiftDetailPage() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-bold text-[var(--foreground)]">
+                <h2 className="text-base font-bold text-slate-900">
                   Konfirmasi Submit Laporan
                 </h2>
-                <p className="text-sm text-[var(--muted)]">
+                <p className="text-sm text-slate-500">
                   Pastikan semua data sudah benar
                 </p>
               </div>
             </div>
 
-            <div className="bg-[var(--surface-hover)] rounded-xl p-4 space-y-2 text-sm">
+            <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Kasir</span>
-                <span className="font-medium text-[var(--foreground)]">
+                <span className="text-slate-500">Kasir</span>
+                <span className="font-medium text-slate-900">
                   {shift?.opener?.full_name}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Tanggal</span>
-                <span className="font-medium text-[var(--foreground)]">
+                <span className="text-slate-500">Tanggal</span>
+                <span className="font-medium text-slate-900">
                   {new Date(shift?.shift_date).toLocaleDateString("id-ID", {
                     day: "numeric",
                     month: "long",
@@ -1108,8 +1109,8 @@ export default function ShiftDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--muted)]">Modal Awal</span>
-                <span className="font-medium text-[var(--foreground)]">
+                <span className="text-slate-500">Modal Awal</span>
+                <span className="font-medium text-slate-900">
                   {formatModalAwal(shift?.modal_awal)}
                 </span>
               </div>
@@ -1130,7 +1131,7 @@ export default function ShiftDetailPage() {
               <button
                 onClick={() => setShowConfirm(false)}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:bg-[var(--surface-hover)] transition"
+                className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
               >
                 Periksa Lagi
               </button>

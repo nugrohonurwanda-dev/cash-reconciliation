@@ -21,15 +21,18 @@ const BatchTransactionSchema = z.object({
 // ─── PUT /api/shifts/:id/transactions ─────────────────────────────────────────
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { session, error } = await requireRole(Role.CASHIER)
+  const { session, error } = await requireRole(Role.CASHIER, Role.HEAD_CASHIER)
   if (error) return error
 
   const shift = await prisma.shiftReport.findUnique({ where: { id } })
   if (!shift) return NextResponse.json({ error: 'Shift tidak ditemukan.' }, { status: 404 })
 
-  if (shift.opened_by !== session!.user.id) {
+  // CASHIER hanya boleh edit shift miliknya sendiri
+  // HEAD_CASHIER boleh edit semua shift (untuk koreksi)
+  if (session!.user.role === Role.CASHIER && shift.opened_by !== session!.user.id) {
     return NextResponse.json({ error: 'Kamu bukan pemilik shift ini.' }, { status: 403 })
   }
+
 
   if (IMMUTABLE_SHIFT_STATUSES.includes(shift.status)) {
     return NextResponse.json(
