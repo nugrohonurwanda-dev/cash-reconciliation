@@ -28,6 +28,7 @@ export type KategoriSummary = {
 };
 
 export type ShiftTotals = {
+  total_deposit_fisik(total_deposit_fisik: any): string;
   total_esb: string;
   total_fisik: string;
   total_selisih: string;
@@ -55,6 +56,7 @@ export type Shift = {
   shift_period: "SHIFT_1" | "SHIFT_2";
   variance_note?: string;
   opener?: { full_name: string };
+  reconciliation?: ShiftTotals;       
   transaction_lines?: any[];
   special_logs?: any[];
   approvals?: any[];
@@ -67,3 +69,4 @@ export type SubmitTotals = {
   totalSelisih: number;
   isVarianceExceeded: boolean;
 };
+

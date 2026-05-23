@@ -226,19 +226,14 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
   const totalDiscount = specialLogs
     .filter((l: any) => l.tipe === "DISCOUNT")
     .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
+  const totalDeposit = specialLogs
+    .filter((l: any) => l.tipe === "DEPOSIT")
+    .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
   const totalOtherCost = specialLogs
     .filter((l: any) => l.tipe === "OTHER_COST")
     .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
-
-  // Gunakan reconciliation dari server untuk total yang akurat:
-  //   - total_fisik_sales sudah exclude deposit (DEPOSIT_BANK, DEPOSIT_CASH)
-  //   - total_deposit_fisik adalah total deposit (uang titipan member)
-  //   - omzet_bersih = total_fisik_sales - void - discount
-  //   - other_cost TIDAK mengurangi omzet (pengeluaran operasional dicatat terpisah)
-  const serverRecon = shift.reconciliation;
-  const totalFisikSales = serverRecon ? parseFloat(String(serverRecon.total_fisik_sales)) : 0;
-  const totalDeposit = serverRecon ? parseFloat(String(serverRecon.total_deposit_fisik)) : 0;
-  const totalOmzetBersih = totalFisikSales - totalVoid - totalDiscount;
+  const totalOmzetBersih =
+    totalFisik - totalVoid - totalDiscount - totalOtherCost;
 
   const fmt = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
