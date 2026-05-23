@@ -121,12 +121,14 @@ export async function POST(req: NextRequest) {
     jakartaDate.getDate(),
   );
 
-  // Cek apakah kasir ini masih punya shift aktif HARI INI
-  // Filter shift_date = todayDate agar shift pending hari lalu tidak memblokir
+  // Cek apakah kasir ini masih punya shift aktif HARI INI.
+  // PENDING_FINANCE tidak dianggap "aktif" — kasir sudah selesai tugasnya
+  // dan HC sudah approve, sehingga tidak memblokir pembukaan shift baru.
+  // Filter shift_date = todayDate agar shift pending hari lalu tidak memblokir.
   const activeShift = await prisma.shiftReport.findFirst({
     where: {
       opened_by: session!.user.id,
-      status: { in: ["OPEN", "PENDING", "PENDING_FINANCE"] },
+      status: { in: [ShiftStatus.OPEN, ShiftStatus.PENDING] },
       shift_date: todayDate,
     },
   });
@@ -140,7 +142,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Validasi SHIFT_2: Shift 1 hari ini harus sudah CLOSED
+  // Validasi SHIFT_2: Shift 1 harus sudah di-approve Head Cashier
+  // (status PENDING_FINANCE atau CLOSED). Tidak perlu tunggu Finance close
+  // karena handover kas fisik sudah terjadi saat HC approve.
   if (shift_period === ShiftPeriod.SHIFT_2) {
     const shift1Today = await prisma.shiftReport.findFirst({
       where: { shift_date: todayDate, shift_period: ShiftPeriod.SHIFT_1 },
@@ -155,15 +159,22 @@ export async function POST(req: NextRequest) {
         { status: 422 },
       );
     }
-    if (shift1Today.status !== ShiftStatus.CLOSED) {
+
+    const shift1Ready =
+      shift1Today.status === ShiftStatus.PENDING_FINANCE ||
+      shift1Today.status === ShiftStatus.CLOSED;
+
+    if (!shift1Ready) {
       return NextResponse.json(
         {
           error:
-            "Shift 1 hari ini belum ditutup. Shift 2 hanya bisa dibuka setelah Shift 1 selesai.",
+            "Shift 1 hari ini belum disetujui Head Cashier. " +
+            "Shift 2 bisa dibuka setelah Shift 1 di-approve oleh Head Cashier.",
         },
         { status: 422 },
       );
     }
+
     if (shift1Today.opened_by === session!.user.id) {
       return NextResponse.json(
         {
