@@ -168,14 +168,14 @@ export default function ReviewPage() {
                     <td className="px-4 py-3 text-[var(--muted)]">
                       {shift.opener?.full_name}
                       {isOwnShift && (
-                        <span className="ml-2 text-xs bg-slate-100 text-[var(--muted)] px-1.5 py-0.5 rounded font-medium">
+                        <span className="ml-2 text-xs bg-[var(--surface-hover)] text-[var(--muted)] px-1.5 py-0.5 rounded font-medium">
                           Shift saya
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-[var(--surface-hover)] text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ?? "-"}
                       </span>
@@ -329,7 +329,7 @@ export default function ReviewPage() {
               <div className="flex justify-between">
                 <span className="text-[var(--muted)]">Periode</span>
                 <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[actionShift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[actionShift.shift_period]?.color ?? "bg-[var(--surface-hover)] text-[var(--muted)]"}`}
                 >
                   {SHIFT_PERIOD_LABEL[actionShift.shift_period]?.label ?? "-"}
                 </span>

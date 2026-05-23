@@ -59,11 +59,11 @@ function ShiftStatusBadge({ status }: { status: string }) {
       label: "Menunggu Finance",
       cls: "bg-orange-100 text-orange-700",
     },
-    CLOSED: { label: "Selesai", cls: "bg-slate-100 text-slate-600" },
+    CLOSED: { label: "Selesai", cls: "bg-[var(--surface-hover)] text-[var(--text-secondary)]" },
   };
   const { label, cls } = map[status] ?? {
     label: status,
-    cls: "bg-slate-100 text-slate-600",
+    cls: "bg-[var(--surface-hover)] text-[var(--text-secondary)]",
   };
   return (
     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls}`}>
@@ -152,13 +152,13 @@ export default function NewShiftPage() {
   if (ctxLoading) {
     return (
       <div className="max-w-md mx-auto pt-4">
-        <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse mb-2" />
-        <div className="h-4 w-64 bg-slate-100 rounded animate-pulse mb-6" />
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
-          <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
-          <div className="h-10 bg-slate-100 rounded-lg animate-pulse" />
-          <div className="h-10 bg-slate-100 rounded-lg animate-pulse" />
-          <div className="h-10 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="h-10 w-48 bg-[var(--border)] rounded-lg animate-pulse mb-2" />
+        <div className="h-4 w-64 bg-[var(--surface-hover)] rounded animate-pulse mb-6" />
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-6 space-y-4">
+          <div className="h-4 w-24 bg-[var(--surface-hover)] rounded animate-pulse" />
+          <div className="h-10 bg-[var(--surface-hover)] rounded-lg animate-pulse" />
+          <div className="h-10 bg-[var(--surface-hover)] rounded-lg animate-pulse" />
+          <div className="h-10 bg-[var(--surface-hover)] rounded-lg animate-pulse" />
         </div>
       </div>
     );
@@ -172,26 +172,26 @@ export default function NewShiftPage() {
     return (
       <div className="max-w-md mx-auto space-y-6 pt-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Buka Shift Baru</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Buka Shift Baru</h1>
+          <p className="text-[var(--muted)] text-sm mt-1">
             Status shift kamu hari ini.
           </p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+        <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-6 space-y-5">
           {/* Info kasir */}
           <div>
-            <p className="text-sm text-slate-500">Kasir</p>
-            <p className="font-medium text-slate-900 mt-0.5">
+            <p className="text-sm text-[var(--muted)]">Kasir</p>
+            <p className="font-medium text-[var(--foreground)] mt-0.5">
               {session?.user?.name ?? "—"}
             </p>
           </div>
 
           {/* Status Shift 1 hari ini */}
           {ctx?.shift1_today && (
-            <div className="bg-slate-50 rounded-lg p-4 space-y-1">
+            <div className="bg-[var(--surface-hover)] rounded-lg p-4 space-y-1">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-700">Shift 1 Hari Ini</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Shift 1 Hari Ini</p>
                 <ShiftStatusBadge status={ctx.shift1_today.status} />
               </div>
             </div>
@@ -199,9 +199,9 @@ export default function NewShiftPage() {
 
           {/* Status Shift 2 hari ini */}
           {ctx?.shift2_today && (
-            <div className="bg-slate-50 rounded-lg p-4 space-y-1">
+            <div className="bg-[var(--surface-hover)] rounded-lg p-4 space-y-1">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-700">Shift 2 Hari Ini</p>
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Shift 2 Hari Ini</p>
                 <ShiftStatusBadge status={ctx.shift2_today.status} />
               </div>
             </div>
@@ -215,7 +215,7 @@ export default function NewShiftPage() {
 
           <button
             onClick={() => router.push("/dashboard")}
-            className="w-full py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+            className="w-full py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition"
           >
             Kembali ke Dashboard
           </button>
@@ -234,47 +234,47 @@ export default function NewShiftPage() {
   return (
     <div className="max-w-md mx-auto space-y-6 pt-4">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Buka Shift Baru</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-2xl font-bold text-[var(--foreground)]">Buka Shift Baru</h1>
+        <p className="text-[var(--muted)] text-sm mt-1">
           Isi detail shift sebelum memulai rekonsiliasi.
         </p>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-5">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-6 space-y-5">
         {/* Kasir info */}
         <div>
-          <p className="text-sm text-slate-500">Kasir</p>
-          <p className="font-medium text-slate-900 mt-0.5">
+          <p className="text-sm text-[var(--muted)]">Kasir</p>
+          <p className="font-medium text-[var(--foreground)] mt-0.5">
             {session?.user?.name ?? "—"}
           </p>
         </div>
 
         {/* Ringkasan status shift hari ini */}
         {ctx && (ctx.shift1_today || ctx.shift2_today) && (
-          <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          <div className="bg-[var(--surface-hover)] rounded-lg p-4 space-y-2">
+            <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">
               Status Shift Hari Ini
             </p>
             {ctx.shift1_today ? (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Shift 1</span>
+                <span className="text-sm text-[var(--text-secondary)]">Shift 1</span>
                 <ShiftStatusBadge status={ctx.shift1_today.status} />
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Shift 1</span>
-                <span className="text-xs text-slate-400 italic">Belum dibuka</span>
+                <span className="text-sm text-[var(--text-tertiary)]">Shift 1</span>
+                <span className="text-xs text-[var(--text-tertiary)] italic">Belum dibuka</span>
               </div>
             )}
             {ctx.shift2_today ? (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Shift 2</span>
+                <span className="text-sm text-[var(--text-secondary)]">Shift 2</span>
                 <ShiftStatusBadge status={ctx.shift2_today.status} />
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-400">Shift 2</span>
-                <span className="text-xs text-slate-400 italic">Belum dibuka</span>
+                <span className="text-sm text-[var(--text-tertiary)]">Shift 2</span>
+                <span className="text-xs text-[var(--text-tertiary)] italic">Belum dibuka</span>
               </div>
             )}
           </div>
@@ -282,7 +282,7 @@ export default function NewShiftPage() {
 
         {/* Periode Shift */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             Periode Shift
           </label>
           <div className="flex gap-3">
@@ -304,10 +304,10 @@ export default function NewShiftPage() {
                   className={[
                     "flex-1 py-2.5 rounded-lg border text-sm font-medium transition relative",
                     isDisabled
-                      ? "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+                      ? "border-[var(--border)] bg-[var(--surface-hover)] text-[var(--border)] cursor-not-allowed"
                       : isSelected
                       ? "bg-blue-600 border-blue-600 text-white"
-                      : "border-slate-200 text-slate-600 hover:bg-slate-50",
+                      : "border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]",
                   ].join(" ")}
                 >
                   {p === "SHIFT_1" ? "Shift 1 (Pagi)" : "Shift 2 (Sore)"}
@@ -315,7 +315,7 @@ export default function NewShiftPage() {
                     <CheckCircleIcon className="w-4 h-4 inline-block ml-1.5 -mt-0.5" />
                   )}
                   {isDisabled && (
-                    <span className="block text-[10px] font-normal mt-0.5 text-slate-300">
+                    <span className="block text-[10px] font-normal mt-0.5 text-[var(--border)]">
                       Tidak tersedia
                     </span>
                   )}
@@ -332,7 +332,7 @@ export default function NewShiftPage() {
             </p>
           )}
           {ctx?.can_open_shift1 && !ctx.can_open_shift2 && (
-            <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
+            <p className="text-xs text-[var(--text-tertiary)] flex items-center gap-1.5 mt-1">
               <InfoIcon className="w-3.5 h-3.5" />
               Shift 2 baru bisa dibuka setelah Shift 1 selesai.
             </p>
@@ -341,11 +341,11 @@ export default function NewShiftPage() {
 
         {/* Modal awal */}
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             Modal Awal
           </label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-sm">
               Rp
             </span>
             <input
@@ -355,10 +355,10 @@ export default function NewShiftPage() {
                 setModalAwal(e.target.value.replace(/\D/g, ""))
               }
               placeholder="1.000.000"
-              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition placeholder:text-[var(--text-tertiary)]"
             />
           </div>
-          <p className="text-xs text-slate-400">Default: Rp 1.000.000</p>
+          <p className="text-xs text-[var(--text-tertiary)]">Default: Rp 1.000.000</p>
         </div>
 
         {/* Error */}
@@ -372,7 +372,7 @@ export default function NewShiftPage() {
         <div className="flex gap-3 pt-1">
           <button
             onClick={() => router.back()}
-            className="flex-1 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+            className="flex-1 py-2.5 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] transition"
           >
             Batal
           </button>

@@ -60,7 +60,7 @@ export default function EditProfileModal({
             <input
               value={user.username}
               disabled
-              className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-slate-100 dark:bg-slate-800
+              className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] dark:bg-slate-800
                 text-[var(--muted)] text-sm cursor-not-allowed"
             />
             <p className="text-xs text-[var(--muted)] mt-1">Username tidak dapat diubah.</p>
@@ -86,7 +86,7 @@ export default function EditProfileModal({
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 rounded-lg border border-[var(--border)]
-              text-[var(--foreground)] text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              text-[var(--foreground)] text-sm hover:bg-[var(--surface-hover)] dark:hover:bg-slate-800 transition-colors"
           >
             Batal
           </button>

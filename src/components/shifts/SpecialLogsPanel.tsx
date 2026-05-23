@@ -23,7 +23,7 @@ function InputRupiah({
 }) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-sm">
         Rp
       </span>
       <input
@@ -31,7 +31,7 @@ function InputRupiah({
         value={value}
         onChange={(e) => onChange(formatRupiah(e.target.value))}
         placeholder="0"
-        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+        className="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
       />
     </div>
   );
@@ -48,7 +48,7 @@ export default function SpecialLogsPanel({
 }: SpecialLogsPanelProps) {
   return (
     <div className="space-y-6">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[var(--muted)]">
         Semua bagian bersifat opsional. Input deposit member dilakukan di tab{" "}
         <strong>ESB</strong> dan <strong>Fisik</strong> pada kategori Deposit.
       </p>
@@ -56,7 +56,7 @@ export default function SpecialLogsPanel({
       {/* Void & Discount */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)]">
             Void & Discount
           </h3>
           <button
@@ -77,14 +77,14 @@ export default function SpecialLogsPanel({
           </button>
         </div>
         {voidDiscountLogs.length === 0 && (
-          <p className="text-xs text-slate-400 italic">
+          <p className="text-xs text-[var(--text-tertiary)] italic">
             Tidak ada void/discount
           </p>
         )}
         {voidDiscountLogs.map((log, i) => (
           <div
             key={i}
-            className="grid grid-cols-4 gap-2 p-3 bg-slate-50 rounded-lg"
+            className="grid grid-cols-4 gap-2 p-3 bg-[var(--surface-hover)] rounded-lg"
           >
             <select
               value={log.tipe}
@@ -100,7 +100,7 @@ export default function SpecialLogsPanel({
                   ),
                 )
               }
-              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-2 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="VOID">Void</option>
               <option value="DISCOUNT">Discount</option>
@@ -115,7 +115,7 @@ export default function SpecialLogsPanel({
                   ),
                 )
               }
-              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-2 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
             <InputRupiah
               value={log.nominal}
@@ -136,7 +136,7 @@ export default function SpecialLogsPanel({
                     ),
                   )
                 }
-                className="flex-1 px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-2 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={() =>
@@ -156,7 +156,7 @@ export default function SpecialLogsPanel({
       {/* Other Cost */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-700">Other Cost</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)]">Other Cost</h3>
           <button
             onClick={() =>
               setOtherCostLogs((prev) => [
@@ -175,12 +175,12 @@ export default function SpecialLogsPanel({
           </button>
         </div>
         {otherCostLogs.length === 0 && (
-          <p className="text-xs text-slate-400 italic">Tidak ada biaya lain</p>
+          <p className="text-xs text-[var(--text-tertiary)] italic">Tidak ada biaya lain</p>
         )}
         {otherCostLogs.map((log, i) => (
           <div
             key={i}
-            className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-lg"
+            className="grid grid-cols-3 gap-2 p-3 bg-[var(--surface-hover)] rounded-lg"
           >
             <select
               value={log.kategori_biaya}
@@ -191,7 +191,7 @@ export default function SpecialLogsPanel({
                   ),
                 )
               }
-              className="px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-2 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="ATK">ATK</option>
               <option value="KEBERSIHAN">Kebersihan</option>
@@ -217,7 +217,7 @@ export default function SpecialLogsPanel({
                     ),
                   )
                 }
-                className="flex-1 px-2 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-2 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={() =>
@@ -235,7 +235,7 @@ export default function SpecialLogsPanel({
       <div className="flex justify-between pt-2">
         <button
           onClick={onBack}
-          className="text-slate-500 hover:text-slate-700 text-sm font-medium px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
+          className="text-[var(--muted)] hover:text-[var(--text-secondary)] text-sm font-medium px-4 py-2.5 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
         >
           ← Kembali
         </button>

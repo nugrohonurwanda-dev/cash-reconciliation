@@ -198,7 +198,7 @@ export default function FinancePage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                   statusFilter === s
                     ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-[var(--muted)] hover:bg-slate-200"
+                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:bg-[var(--surface-hover)]"
                 }`}
               >
                 {s === "" ? "Semua Status" : (STATUS_LABEL[s]?.label ?? s)}
@@ -206,7 +206,7 @@ export default function FinancePage() {
             ))}
           </div>
 
-          <div className="w-px h-5 bg-slate-200" />
+          <div className="w-px h-5 bg-[var(--border)]" />
 
           {/* Mode filter tanggal */}
           <div className="flex gap-2">
@@ -222,8 +222,8 @@ export default function FinancePage() {
                 onClick={() => setFilterMode(m.key)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                   filterMode === m.key
-                    ? "bg-slate-800 text-white"
-                    : "bg-slate-100 text-[var(--muted)] hover:bg-slate-200"
+                    ? "bg-[var(--primary)] text-white"
+                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:bg-[var(--surface-hover)]"
                 }`}
               >
                 {m.label}
@@ -301,20 +301,20 @@ export default function FinancePage() {
 
       {/* Summary Card — tampil hanya kalau ada filter & ada data CLOSED */}
       {filterMode !== "all" && closedShifts.length > 0 && (
-        <div className="bg-slate-900 rounded-xl p-5">
+        <div className="bg-[var(--surface-accent)] border border-[var(--border)] rounded-xl p-5">
           <p className="text-[var(--text-tertiary)] text-xs font-medium mb-4 uppercase tracking-wide">
             Rekap {periodLabel()}
           </p>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <p className="text-[var(--text-tertiary)] text-xs">Total Shift Closed</p>
-              <p className="text-white text-2xl font-bold mt-1">
+              <p className="text-[var(--foreground)] text-2xl font-bold mt-1">
                 {closedShifts.length}
               </p>
             </div>
             <div>
               <p className="text-[var(--text-tertiary)] text-xs">Total Modal Awal</p>
-              <p className="text-white text-2xl font-bold mt-1">
+              <p className="text-[var(--foreground)] text-2xl font-bold mt-1">
                 {fmt(totalModalAwal)}
               </p>
             </div>
@@ -338,7 +338,7 @@ export default function FinancePage() {
           <div className="p-8 text-center">
             <p className="text-[var(--text-tertiary)] text-sm">Tidak ada laporan</p>
             {filterMode !== "all" && (
-              <p className="text-slate-300 text-xs mt-1">
+              <p className="text-[var(--border)] text-xs mt-1">
                 Coba ubah filter periode atau status
               </p>
             )}
@@ -427,7 +427,7 @@ export default function FinancePage() {
                         {isClosed && (
                           <button
                             onClick={() => openPDF(shift.id)}
-                            className="bg-[var(--surface-hover)] hover:bg-slate-100 text-[var(--foreground)] text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                            className="bg-[var(--surface-hover)] hover:bg-[var(--surface-hover)] text-[var(--foreground)] text-xs font-medium px-3 py-1.5 rounded-lg transition"
                           >
                             Lihat PDF
                           </button>

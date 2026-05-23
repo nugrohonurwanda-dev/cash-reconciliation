@@ -90,7 +90,7 @@ function InputRupiah({
 }) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm select-none">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] text-sm select-none">
         Rp
       </span>
       <input
@@ -100,7 +100,7 @@ function InputRupiah({
         onChange={(e) => onChange(formatRupiah(e.target.value))}
         disabled={disabled}
         placeholder="0"
-        className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-900 placeholder:text-slate-300 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-slate-50 disabled:text-slate-400 text-right"
+        className="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--foreground)] placeholder:text-[var(--border)] outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-[var(--surface-hover)] disabled:text-[var(--text-tertiary)] text-right"
       />
     </div>
   );
@@ -129,14 +129,14 @@ function EsbTab({
 }: Pick<EsbFisikFormProps, "esbLines" | "updateEsbLine" | "saveTransactions" | "saving">) {
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[var(--muted)]">
         Masukkan nilai dari laporan mesin kasir (sistem ESB).
         Nilai yang tidak ada bisa dikosongkan (dianggap Rp 0).
       </p>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-12 px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-xs font-medium text-slate-500">
+        <div className="grid grid-cols-12 px-4 py-2.5 bg-[var(--surface-hover)] border-b border-[var(--border)] text-xs font-medium text-[var(--muted)]">
           <span className="col-span-4">Kategori</span>
           <span className="col-span-5 text-right pr-3">Nilai ESB (Sistem)</span>
           <span className="col-span-3">Catatan</span>
@@ -157,9 +157,9 @@ function EsbTab({
                 return (
                   <div
                     key={item.key}
-                    className="grid grid-cols-12 items-center px-4 py-2 border-b border-slate-100 hover:bg-slate-50/50 transition"
+                    className="grid grid-cols-12 items-center px-4 py-2 border-b border-[var(--border)] hover:bg-[var(--surface-hover)]/50 transition"
                   >
-                    <span className="col-span-4 text-sm text-slate-700 pl-2">
+                    <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
                       {item.label}
                     </span>
                     <div className="col-span-5 pr-3">
@@ -178,7 +178,7 @@ function EsbTab({
                           if (idx >= 0) updateEsbLine(idx, "catatan", e.target.value);
                         }}
                         placeholder="Opsional"
-                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition placeholder:text-[var(--text-tertiary)]"
                       />
                     </div>
                   </div>
@@ -186,11 +186,11 @@ function EsbTab({
               })}
 
               {/* Subtotal grup */}
-              <div className="grid grid-cols-12 items-center px-4 py-2 bg-slate-100 border-b border-slate-200">
-                <span className="col-span-4 text-xs font-semibold text-slate-600 pl-2">
+              <div className="grid grid-cols-12 items-center px-4 py-2 bg-[var(--surface-hover)] border-b border-[var(--border)]">
+                <span className="col-span-4 text-xs font-semibold text-[var(--text-secondary)] pl-2">
                   Subtotal {group.group}
                 </span>
-                <span className="col-span-5 text-right text-sm font-semibold text-slate-800 pr-3">
+                <span className="col-span-5 text-right text-sm font-semibold text-[var(--foreground)] pr-3">
                   {fmt(subtotal)}
                 </span>
                 <span className="col-span-3" />
@@ -249,14 +249,14 @@ function FisikTab({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[var(--muted)]">
         Masukkan hasil hitung fisik — uang tunai, struk EDC, slip setoran.
         Selisih dihitung otomatis per kategori.
       </p>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {/* Header */}
-        <div className="grid grid-cols-12 px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-xs font-medium text-slate-500">
+        <div className="grid grid-cols-12 px-4 py-2.5 bg-[var(--surface-hover)] border-b border-[var(--border)] text-xs font-medium text-[var(--muted)]">
           <span className="col-span-4">Kategori</span>
           <span className="col-span-3 text-right pr-3">ESB (Sistem)</span>
           <span className="col-span-3 text-right pr-3">Fisik</span>
@@ -285,14 +285,14 @@ function FisikTab({
                 return (
                   <div
                     key={item.key}
-                    className="grid grid-cols-12 items-center px-4 py-2 border-b border-slate-100 hover:bg-slate-50/50 transition"
+                    className="grid grid-cols-12 items-center px-4 py-2 border-b border-[var(--border)] hover:bg-[var(--surface-hover)]/50 transition"
                   >
-                    <span className="col-span-4 text-sm text-slate-700 pl-2">
+                    <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
                       {item.label}
                     </span>
                     {/* ESB read-only */}
-                    <span className="col-span-3 text-right text-sm text-slate-400 pr-3">
-                      {esb > 0 ? fmt(esb) : <span className="text-slate-200">Rp 0</span>}
+                    <span className="col-span-3 text-right text-sm text-[var(--text-tertiary)] pr-3">
+                      {esb > 0 ? fmt(esb) : <span className="text-[var(--border)]">Rp 0</span>}
                     </span>
                     {/* Input Fisik */}
                     <div className="col-span-3 pr-3">
@@ -307,12 +307,12 @@ function FisikTab({
                     <span
                       className={`col-span-2 text-right text-sm font-medium ${
                         !hasInput
-                          ? "text-slate-300"
+                          ? "text-[var(--border)]"
                           : selisih < 0
                             ? "text-red-600"
                             : selisih > 0
                               ? "text-emerald-600"
-                              : "text-slate-400"
+                              : "text-[var(--text-tertiary)]"
                       }`}
                     >
                       {hasInput
@@ -324,14 +324,14 @@ function FisikTab({
               })}
 
               {/* Subtotal grup */}
-              <div className="grid grid-cols-12 items-center px-4 py-2 bg-slate-100 border-b border-slate-200">
-                <span className="col-span-4 text-xs font-semibold text-slate-600 pl-2">
+              <div className="grid grid-cols-12 items-center px-4 py-2 bg-[var(--surface-hover)] border-b border-[var(--border)]">
+                <span className="col-span-4 text-xs font-semibold text-[var(--text-secondary)] pl-2">
                   Subtotal {group.group}
                 </span>
-                <span className="col-span-3 text-right text-xs font-semibold text-slate-500 pr-3">
+                <span className="col-span-3 text-right text-xs font-semibold text-[var(--muted)] pr-3">
                   {fmt(subtotalEsb)}
                 </span>
-                <span className="col-span-3 text-right text-sm font-semibold text-slate-800 pr-3">
+                <span className="col-span-3 text-right text-sm font-semibold text-[var(--foreground)] pr-3">
                   {fmt(subtotalFisik)}
                 </span>
                 <span
@@ -340,7 +340,7 @@ function FisikTab({
                       ? "text-red-600"
                       : subtotalSelisih > 0
                         ? "text-emerald-600"
-                        : "text-slate-400"
+                        : "text-[var(--text-tertiary)]"
                   }`}
                 >
                   {`${subtotalSelisih >= 0 ? "+" : ""}${fmt(subtotalSelisih)}`}
@@ -384,7 +384,7 @@ function FisikTab({
       <div className="flex justify-between pt-2">
         <button
           onClick={onBack}
-          className="text-slate-500 hover:text-slate-700 text-sm font-medium px-4 py-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition"
+          className="text-[var(--muted)] hover:text-[var(--text-secondary)] text-sm font-medium px-4 py-2.5 rounded-lg border border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
         >
           ← Kembali ke ESB
         </button>

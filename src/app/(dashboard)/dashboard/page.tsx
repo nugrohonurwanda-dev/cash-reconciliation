@@ -166,7 +166,7 @@ export default async function DashboardPage() {
                     key={shift.id}
                     className="border-t border-[var(--border)] hover:bg-[var(--surface-hover)]"
                   >
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">
                       {new Date(shift.shift_date).toLocaleDateString("id-ID", {
                         weekday: "short",
                         day: "numeric",
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-[var(--surface-hover)] text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
                           shift.shift_period}
@@ -306,7 +306,7 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-[var(--surface-hover)] text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
                           shift.shift_period}
@@ -459,7 +459,7 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-slate-100 text-[var(--muted)]"}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${SHIFT_PERIOD_LABEL[shift.shift_period]?.color ?? "bg-[var(--surface-hover)] text-[var(--muted)]"}`}
                       >
                         {SHIFT_PERIOD_LABEL[shift.shift_period]?.label ??
                           shift.shift_period}
