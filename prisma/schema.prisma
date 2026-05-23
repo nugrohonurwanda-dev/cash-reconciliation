@@ -9,17 +9,18 @@ datasource db {
 
 // ─── USER ─────────────────────────────────────────────────────────────────────
 model User {
-  id            String         @id @default(cuid())
-  username      String         @unique
+  id            String                @id @default(cuid())
+  username      String                @unique
   full_name     String
   role          Role
   password_hash String
-  is_active     Boolean        @default(true)
-  created_at    DateTime       @default(now())
+  is_active     Boolean               @default(true)
+  created_at    DateTime              @default(now())
   approvals     Approval[]
-  shifts        ShiftReport[]  @relation("ShiftOpener")
+  shifts        ShiftReport[]         @relation("ShiftOpener")
   special_logs  SpecialLog[]
   notifications Notification[]
+  audit_logs    TransactionAuditLog[]
 
   @@map("users")
 }
@@ -28,21 +29,22 @@ model User {
 // id tidak lagi CUID — generate manual di application layer
 // format: SHF-YYYYMMDD-S1-001
 model ShiftReport {
-  id                String            @id
-  shift_date        DateTime          @db.Date
+  id                String                @id
+  shift_date        DateTime              @db.Date
   opened_by         String
-  opened_at         DateTime          @default(now())
+  opened_at         DateTime              @default(now())
   closed_at         DateTime?
-  modal_awal        Decimal           @default(1000000) @db.Decimal(15, 2)
-  status            ShiftStatus       @default(OPEN)
-  shift_period      ShiftPeriod       @default(SHIFT_1)
+  modal_awal        Decimal               @default(1000000) @db.Decimal(15, 2)
+  status            ShiftStatus           @default(OPEN)
+  shift_period      ShiftPeriod           @default(SHIFT_1)
   variance_note     String?
-  created_at        DateTime          @default(now())
-  updated_at        DateTime          @updatedAt
+  created_at        DateTime              @default(now())
+  updated_at        DateTime              @updatedAt
   approvals         Approval[]
-  opener            User              @relation("ShiftOpener", fields: [opened_by], references: [id])
+  opener            User                  @relation("ShiftOpener", fields: [opened_by], references: [id])
   special_logs      SpecialLog[]
   transaction_lines TransactionLine[]
+  audit_logs        TransactionAuditLog[]
 
   @@index([opened_by, status])
   @@index([shift_date])
@@ -116,6 +118,26 @@ model Notification {
   @@index([user_id, is_read])
   @@index([created_at])
   @@map("notifications")
+}
+
+// ─── TRANSACTION AUDIT LOG ───────────────────────────────────────────────────
+// Rekam setiap kali transaksi diedit: siapa, kapan, dari nilai apa ke apa
+model TransactionAuditLog {
+  id         String            @id @default(cuid())
+  shift_id   String
+  changed_by String
+  sumber     TransactionSource
+  reason     String? // alasan edit (wajib di-isi di form)
+  old_lines  Json // snapshot baris sebelum dihapus
+  new_lines  Json // snapshot baris setelah disimpan
+  changed_at DateTime          @default(now())
+
+  shift   ShiftReport @relation(fields: [shift_id], references: [id], onDelete: Cascade)
+  changer User        @relation(fields: [changed_by], references: [id])
+
+  @@index([shift_id])
+  @@index([changed_by])
+  @@map("transaction_audit_logs")
 }
 
 // ─── ENUMS ────────────────────────────────────────────────────────────────────

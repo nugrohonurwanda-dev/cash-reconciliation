@@ -111,24 +111,7 @@ export async function POST(req: NextRequest) {
 
   const { modal_awal, shift_period } = parsed.data;
 
-  // Cek apakah kasir ini masih punya shift aktif
-  const activeShift = await prisma.shiftReport.findFirst({
-    where: {
-      opened_by: session!.user.id,
-      status: { in: ["OPEN", "PENDING", "PENDING_FINANCE"] },
-    },
-  });
-  if (activeShift) {
-    return NextResponse.json(
-      {
-        error:
-          "Kamu masih memiliki shift aktif. Selesaikan shift sebelumnya terlebih dahulu.",
-      },
-      { status: 409 },
-    );
-  }
-
-  // Tanggal hari ini dalam WIB
+  // Tanggal hari ini dalam WIB — harus dihitung lebih dulu sebelum cek shift aktif
   const now = new Date();
   const jakartaStr = now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
   const jakartaDate = new Date(jakartaStr);
@@ -137,6 +120,25 @@ export async function POST(req: NextRequest) {
     jakartaDate.getMonth(),
     jakartaDate.getDate(),
   );
+
+  // Cek apakah kasir ini masih punya shift aktif HARI INI
+  // Filter shift_date = todayDate agar shift pending hari lalu tidak memblokir
+  const activeShift = await prisma.shiftReport.findFirst({
+    where: {
+      opened_by: session!.user.id,
+      status: { in: ["OPEN", "PENDING", "PENDING_FINANCE"] },
+      shift_date: todayDate,
+    },
+  });
+  if (activeShift) {
+    return NextResponse.json(
+      {
+        error:
+          "Kamu masih memiliki shift aktif hari ini. Selesaikan shift sebelumnya terlebih dahulu.",
+      },
+      { status: 409 },
+    );
+  }
 
   // Validasi SHIFT_2: Shift 1 hari ini harus sudah CLOSED
   if (shift_period === ShiftPeriod.SHIFT_2) {
@@ -183,28 +185,35 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Hitung nomor urut untuk shift ID
-  // Sequence: berapa shift dengan period ini sudah ada di hari ini
-  const existingCount = await prisma.shiftReport.count({
-    where: { shift_date: todayDate, shift_period },
-  });
-  const seq = existingCount + 1;
-  const shiftId = generateShiftId(todayDate, shift_period, seq);
+  // Buat shift dalam serializable transaction untuk cegah race condition
+  // pada shift ID generation (count + 1 tanpa DB-level unique constraint)
+  const shift = await prisma.$transaction(
+    async (tx) => {
+      // Hitung urutan di dalam transaksi agar tidak ada dua request
+      // yang mendapat sequence yang sama secara bersamaan
+      const existingCount = await tx.shiftReport.count({
+        where: { shift_date: todayDate, shift_period },
+      });
+      const seq = existingCount + 1;
+      const shiftId = generateShiftId(todayDate, shift_period, seq);
 
-  const shift = await prisma.shiftReport.create({
-    data: {
-      id: shiftId,
-      shift_date: todayDate,
-      opened_by: session!.user.id,
-      opened_at: now,
-      modal_awal,
-      shift_period,
-      status: "OPEN",
+      return tx.shiftReport.create({
+        data: {
+          id: shiftId,
+          shift_date: todayDate,
+          opened_by: session!.user.id,
+          opened_at: now,
+          modal_awal,
+          shift_period,
+          status: "OPEN",
+        },
+        include: {
+          opener: { select: { id: true, full_name: true, username: true } },
+        },
+      });
     },
-    include: {
-      opener: { select: { id: true, full_name: true, username: true } },
-    },
-  });
+    { isolationLevel: "Serializable" },
+  );
 
   return NextResponse.json({ data: shift }, { status: 201 });
 }

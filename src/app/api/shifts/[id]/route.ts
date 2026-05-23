@@ -14,7 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { error } = await requireRole(
+  const { session, error } = await requireRole(
     Role.CASHIER,
     Role.HEAD_CASHIER,
     Role.FINANCE,
@@ -45,6 +45,11 @@ export async function GET(
       { error: "Shift tidak ditemukan." },
       { status: 404 },
     );
+  }
+
+  // CASHIER hanya boleh membaca shift miliknya sendiri
+  if (session!.user.role === Role.CASHIER && shift.opened_by !== session!.user.id) {
+    return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
   }
 
   const reconciliation = calculateReconciliation(shift.transaction_lines);

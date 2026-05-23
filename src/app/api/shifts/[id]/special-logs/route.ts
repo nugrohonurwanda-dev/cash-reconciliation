@@ -105,12 +105,21 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const { error } = await requireRole(
+  const { session, error } = await requireRole(
     Role.CASHIER,
     Role.HEAD_CASHIER,
     Role.FINANCE,
   );
   if (error) return error;
+
+  // CASHIER hanya boleh membaca special logs shift miliknya sendiri
+  if (session!.user.role === Role.CASHIER) {
+    const shift = await prisma.shiftReport.findUnique({ where: { id }, select: { opened_by: true } });
+    if (!shift) return NextResponse.json({ error: "Shift tidak ditemukan." }, { status: 404 });
+    if (shift.opened_by !== session!.user.id) {
+      return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
+    }
+  }
 
   const logs = await prisma.specialLog.findMany({
     where: { shift_id: id },

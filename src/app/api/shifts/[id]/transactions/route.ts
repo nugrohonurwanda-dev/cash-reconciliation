@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/session'
-import { Role, TransactionSource, PaymentCategory } from '@prisma/client'
+import { Role, TransactionSource, PaymentCategory, Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { IMMUTABLE_SHIFT_STATUSES } from '@/lib/constants'
 
@@ -16,6 +16,8 @@ const TransactionLineSchema = z.object({
 
 const BatchTransactionSchema = z.object({
   lines: z.array(TransactionLineSchema).min(1),
+  // Alasan edit — wajib jika shift sudah pernah disimpan sebelumnya (ada data lama)
+  reason: z.string().max(300).optional(),
 })
 
 // ─── PUT /api/shifts/:id/transactions ─────────────────────────────────────────
@@ -47,7 +49,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Input tidak valid', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { lines } = parsed.data
+  const { lines, reason } = parsed.data
 
   // Validasi: semua lines harus sumber yang sama (ESB atau FISIK)
   const sumberSet = new Set(lines.map((l) => l.sumber))
@@ -61,8 +63,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const sumber = lines[0].sumber
 
   const result = await prisma.$transaction(async (tx) => {
+    // Simpan snapshot data lama sebelum dihapus — untuk audit trail
+    const oldLines = await tx.transactionLine.findMany({
+      where: { shift_id: id, sumber },
+      select: { kategori: true, nilai: true, catatan: true },
+    })
+
     await tx.transactionLine.deleteMany({ where: { shift_id: id, sumber } })
-    return tx.transactionLine.createMany({
+
+    const createResult = await tx.transactionLine.createMany({
       data: lines.map((l) => ({
         shift_id: id,
         sumber: l.sumber,
@@ -71,6 +80,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         catatan: l.catatan,
       })),
     })
+
+    // Tulis audit log: siapa, kapan, dari nilai apa ke nilai apa
+    // Selalu tulis audit log (even first save), agar ada rekam jejak lengkap
+    await tx.transactionAuditLog.create({
+      data: {
+        shift_id: id,
+        changed_by: session!.user.id,
+        sumber,
+        reason: reason ?? null,
+        old_lines: oldLines as unknown as Prisma.InputJsonValue,
+        new_lines: lines.map((l) => ({
+          kategori: l.kategori,
+          nilai: l.nilai,
+          catatan: l.catatan ?? null,
+        })) as unknown as Prisma.InputJsonValue,
+      },
+    })
+
+    return createResult
   })
 
   return NextResponse.json({ data: result, message: `${result.count} baris berhasil disimpan.` })
@@ -79,8 +107,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 // ─── GET /api/shifts/:id/transactions ─────────────────────────────────────────
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { error } = await requireRole(Role.CASHIER, Role.HEAD_CASHIER, Role.FINANCE)
+  const { session, error } = await requireRole(Role.CASHIER, Role.HEAD_CASHIER, Role.FINANCE)
   if (error) return error
+
+  // CASHIER hanya boleh membaca transaksi shift miliknya sendiri
+  if (session!.user.role === Role.CASHIER) {
+    const shift = await prisma.shiftReport.findUnique({ where: { id }, select: { opened_by: true } })
+    if (!shift) return NextResponse.json({ error: 'Shift tidak ditemukan.' }, { status: 404 })
+    if (shift.opened_by !== session!.user.id) {
+      return NextResponse.json({ error: 'Akses ditolak.' }, { status: 403 })
+    }
+  }
 
   const lines = await prisma.transactionLine.findMany({
     where: { shift_id: id },
