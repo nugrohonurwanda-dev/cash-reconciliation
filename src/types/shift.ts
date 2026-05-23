@@ -28,10 +28,13 @@ export type KategoriSummary = {
 };
 
 export type ShiftTotals = {
-  total_deposit_fisik(total_deposit_fisik: any): string;
+  total_deposit_fisik: string;
   total_esb: string;
   total_fisik: string;
   total_selisih: string;
+  total_fisik_sales: string;       // ← tambah
+  total_esb_sales: string;         // ← tambah
+  total_deposit_esb: string; 
   per_kategori: KategoriSummary[];
   is_variance_exceeded: boolean;
 };
