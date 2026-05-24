@@ -27,8 +27,7 @@ const DiscountSchema = z.object({
 
 const OtherCostSchema = z.object({
   tipe: z.literal(SpecialLogType.OTHER_COST),
-  kategori_biaya: z.enum(["ATK", "KEBERSIHAN", "OPERASIONAL", "LAIN_LAIN"]),
-  nominal: z.number().positive("Nominal harus lebih dari 0"),
+  kategori_biaya: z.string().min(1, "Jenis pembelian wajib diisi").max(100),  nominal: z.number().positive("Nominal harus lebih dari 0"),
   keterangan: z.string().min(1, "Keterangan wajib diisi").max(200),
 });
 

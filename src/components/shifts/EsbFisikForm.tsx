@@ -62,13 +62,6 @@ function findIdx(lines: TransactionLine[], key: string): number {
   return lines.findIndex((l) => l.kategori === key);
 }
 
-function subtotalGroup(lines: TransactionLine[], keys: readonly string[]): number {
-  return keys.reduce((sum: number, key: string) => {
-    const line = findLine(lines, key);
-    return sum + parseRupiah(line?.nilai ?? "0");
-  }, 0);
-}
-
 function grandTotal(lines: TransactionLine[]): number {
   return lines.reduce((sum: number, l: TransactionLine) => sum + parseRupiah(l.nilai ?? "0"), 0);
 }
@@ -142,68 +135,52 @@ function EsbTab({
           <span className="col-span-3">Catatan</span>
         </div>
 
-        {KATEGORI_GROUPS.map((group) => {
-          const keys = group.items.map((item) => item.key);
-          const subtotal = subtotalGroup(esbLines, keys);
+        {KATEGORI_GROUPS.map((group) => (
+          <div key={group.group}>
+            {group.items.map((item) => {
+              const line = findLine(esbLines, item.key);
+              const idx = findIdx(esbLines, item.key);
+              const nilai = line?.nilai ?? "";
+              const catatan = line?.catatan ?? "";
 
-          return (
-            <div key={group.group}>
-              {group.items.map((item) => {
-                const line = findLine(esbLines, item.key);
-                const idx = findIdx(esbLines, item.key);
-                const nilai = line?.nilai ?? "";
-                const catatan = line?.catatan ?? "";
-
-                return (
-                  <div
-                    key={item.key}
-                    className="grid grid-cols-12 items-center px-4 py-2 border-b border-[var(--border)] hover:bg-[var(--surface-hover)]/50 transition"
-                  >
-                    <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
-                      {item.label}
-                    </span>
-                    <div className="col-span-5 pr-3">
-                      <InputRupiah
-                        value={nilai}
-                        onChange={(v) => {
-                          if (idx >= 0) updateEsbLine(idx, "nilai", v);
-                        }}
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <input
-                        type="text"
-                        value={catatan}
-                        onChange={(e) => {
-                          if (idx >= 0) updateEsbLine(idx, "catatan", e.target.value);
-                        }}
-                        placeholder="Opsional"
-                        className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition placeholder:text-[var(--text-tertiary)]"
-                      />
-                    </div>
+              return (
+                <div
+                  key={item.key}
+                  className="grid grid-cols-12 items-center px-4 py-2 border-b border-[var(--border)] hover:bg-[var(--surface-hover)]/50 transition"
+                >
+                  <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
+                    {item.label}
+                  </span>
+                  <div className="col-span-5 pr-3">
+                    <InputRupiah
+                      value={nilai}
+                      onChange={(v) => {
+                        if (idx >= 0) updateEsbLine(idx, "nilai", v);
+                      }}
+                    />
                   </div>
-                );
-              })}
-
-              {/* Subtotal grup */}
-              <div className="grid grid-cols-12 items-center px-4 py-2 bg-[var(--surface-hover)] border-b border-[var(--border)]">
-                <span className="col-span-4 text-xs font-semibold text-[var(--text-secondary)] pl-2">
-                  Subtotal {group.group}
-                </span>
-                <span className="col-span-5 text-right text-sm font-semibold text-[var(--foreground)] pr-3">
-                  {fmt(subtotal)}
-                </span>
-                <span className="col-span-3" />
-              </div>
-
-              {"note" in group && group.note && (
-                <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100">
-                  <p className="text-xs text-amber-600">{group.note}</p>
+                  <div className="col-span-3">
+                    <input
+                      type="text"
+                      value={catatan}
+                      onChange={(e) => {
+                        if (idx >= 0) updateEsbLine(idx, "catatan", e.target.value);
+                      }}
+                      placeholder="Opsional"
+                      className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition placeholder:text-[var(--text-tertiary)]"
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+
+            {"note" in group && group.note && (
+              <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100">
+                <p className="text-xs text-amber-600">{group.note}</p>
+              </div>
+            )}
+          </div>
+        ))}
 
         {/* Grand total */}
         <div className="grid grid-cols-12 items-center px-4 py-3 bg-blue-50">
@@ -263,98 +240,67 @@ function FisikTab({
           <span className="col-span-2 text-right">Selisih</span>
         </div>
 
-        {KATEGORI_GROUPS.map((group) => {
-          const keys = group.items.map((item) => item.key);
-          const subtotalEsb = subtotalGroup(esbLines, keys);
-          const subtotalFisik = subtotalGroup(fisikLines, keys);
-          const subtotalSelisih = subtotalFisik - subtotalEsb;
+        {KATEGORI_GROUPS.map((group) => (
+          <div key={group.group}>
+            {group.items.map((item) => {
+              const fisikLine = findLine(fisikLines, item.key);
+              const esbLine = findLine(esbLines, item.key);
+              const idx = findIdx(fisikLines, item.key);
 
-          return (
-            <div key={group.group}>
-              {group.items.map((item) => {
-                const fisikLine = findLine(fisikLines, item.key);
-                const esbLine = findLine(esbLines, item.key);
-                const idx = findIdx(fisikLines, item.key);
+              const esb = parseRupiah(esbLine?.nilai ?? "0");
+              const fisikNilai = fisikLine?.nilai ?? "";
+              const fisik = parseRupiah(fisikNilai);
+              const selisih = fisik - esb;
+              const hasInput = fisikNilai !== "" && fisikNilai !== "0";
 
-                const esb = parseRupiah(esbLine?.nilai ?? "0");
-                const fisikNilai = fisikLine?.nilai ?? "";
-                const fisik = parseRupiah(fisikNilai);
-                const selisih = fisik - esb;
-                const hasInput = fisikNilai !== "" && fisikNilai !== "0";
-
-                return (
-                  <div
-                    key={item.key}
-                    className="grid grid-cols-12 items-center px-4 py-2 border-b border-[var(--border)] hover:bg-[var(--surface-hover)]/50 transition"
-                  >
-                    <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
-                      {item.label}
-                    </span>
-                    {/* ESB read-only */}
-                    <span className="col-span-3 text-right text-sm text-[var(--text-tertiary)] pr-3">
-                      {esb > 0 ? fmt(esb) : <span className="text-[var(--border)]">Rp 0</span>}
-                    </span>
-                    {/* Input Fisik */}
-                    <div className="col-span-3 pr-3">
-                      <InputRupiah
-                        value={fisikNilai}
-                        onChange={(v) => {
-                          if (idx >= 0) updateFisikLine(idx, "nilai", v);
-                        }}
-                      />
-                    </div>
-                    {/* Selisih realtime */}
-                    <span
-                      className={`col-span-2 text-right text-sm font-medium ${
-                        !hasInput
-                          ? "text-[var(--border)]"
-                          : selisih < 0
-                            ? "text-red-600"
-                            : selisih > 0
-                              ? "text-emerald-600"
-                              : "text-[var(--text-tertiary)]"
-                      }`}
-                    >
-                      {hasInput
-                        ? `${selisih >= 0 ? "+" : ""}${fmt(selisih)}`
-                        : "—"}
-                    </span>
-                  </div>
-                );
-              })}
-
-              {/* Subtotal grup */}
-              <div className="grid grid-cols-12 items-center px-4 py-2 bg-[var(--surface-hover)] border-b border-[var(--border)]">
-                <span className="col-span-4 text-xs font-semibold text-[var(--text-secondary)] pl-2">
-                  Subtotal {group.group}
-                </span>
-                <span className="col-span-3 text-right text-xs font-semibold text-[var(--muted)] pr-3">
-                  {fmt(subtotalEsb)}
-                </span>
-                <span className="col-span-3 text-right text-sm font-semibold text-[var(--foreground)] pr-3">
-                  {fmt(subtotalFisik)}
-                </span>
-                <span
-                  className={`col-span-2 text-right text-xs font-semibold ${
-                    subtotalSelisih < 0
-                      ? "text-red-600"
-                      : subtotalSelisih > 0
-                        ? "text-emerald-600"
-                        : "text-[var(--text-tertiary)]"
-                  }`}
+              return (
+                <div
+                  key={item.key}
+                  className="grid grid-cols-12 items-center px-4 py-2 border-b border-[var(--border)] hover:bg-[var(--surface-hover)]/50 transition"
                 >
-                  {`${subtotalSelisih >= 0 ? "+" : ""}${fmt(subtotalSelisih)}`}
-                </span>
-              </div>
-
-              {"note" in group && group.note && (
-                <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100">
-                  <p className="text-xs text-amber-600">{group.note}</p>
+                  <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
+                    {item.label}
+                  </span>
+                  {/* ESB read-only */}
+                  <span className="col-span-3 text-right text-sm text-[var(--text-tertiary)] pr-3">
+                    {esb > 0 ? fmt(esb) : <span className="text-[var(--border)]">Rp 0</span>}
+                  </span>
+                  {/* Input Fisik */}
+                  <div className="col-span-3 pr-3">
+                    <InputRupiah
+                      value={fisikNilai}
+                      onChange={(v) => {
+                        if (idx >= 0) updateFisikLine(idx, "nilai", v);
+                      }}
+                    />
+                  </div>
+                  {/* Selisih realtime */}
+                  <span
+                    className={`col-span-2 text-right text-sm font-medium ${
+                      !hasInput
+                        ? "text-[var(--border)]"
+                        : selisih < 0
+                          ? "text-red-600"
+                          : selisih > 0
+                            ? "text-emerald-600"
+                            : "text-[var(--text-tertiary)]"
+                    }`}
+                  >
+                    {hasInput
+                      ? `${selisih >= 0 ? "+" : ""}${fmt(selisih)}`
+                      : "—"}
+                  </span>
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+
+            {"note" in group && group.note && (
+              <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100">
+                <p className="text-xs text-amber-600">{group.note}</p>
+              </div>
+            )}
+          </div>
+        ))}
 
         {/* Grand total */}
         <div className="grid grid-cols-12 items-center px-4 py-3 bg-blue-50">

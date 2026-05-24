@@ -750,7 +750,7 @@ export default function ShiftDetailPage() {
         .filter((l) => l.nominal)
         .map((l) => ({
           tipe: "OTHER_COST",
-          kategori_biaya: l.kategori_biaya || "LAIN_LAIN",
+          kategori_biaya: l.kategori_biaya || "",
           nominal: parseRupiah(l.nominal),
           keterangan: l.keterangan,
         })),

@@ -310,7 +310,7 @@ export default function NewShiftPage() {
                       : "border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]",
                   ].join(" ")}
                 >
-                  {p === "SHIFT_1" ? "Shift 1 (Pagi)" : "Shift 2 (Sore)"}
+                  {p === "SHIFT_1" ? "Shift 1 (Pagi)" : "Shift 2 (Siang)"}
                   {isSelected && !isDisabled && (
                     <CheckCircleIcon className="w-4 h-4 inline-block ml-1.5 -mt-0.5" />
                   )}
