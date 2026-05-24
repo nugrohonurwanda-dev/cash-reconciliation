@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { Role } from "@prisma/client";
 import { calculateReconciliation } from "@/lib/calculations";
+import { getTodayRangeWIB } from "@/utils/date";
 
 // ─── GET /api/dashboard ────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
@@ -14,10 +15,7 @@ export async function GET(req: NextRequest) {
   );
   if (error) return error;
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  const { start: todayStart, end: todayEnd } = getTodayRangeWIB();
 
   const role = session!.user.role;
   const userId = session!.user.id;
@@ -50,7 +48,7 @@ export async function GET(req: NextRequest) {
   if (role === Role.HEAD_CASHIER) {
     const [todayShifts, pendingCount] = await prisma.$transaction([
       prisma.shiftReport.findMany({
-        where: { shift_date: { gte: todayStart, lte: todayEnd } },
+        where: { shift_date: { gte: todayStart, lt: todayEnd } },
         include: {
           opener: { select: { id: true, full_name: true } },
           transaction_lines: true,

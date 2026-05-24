@@ -6,6 +6,7 @@ import { Role, ShiftPeriod, ShiftStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { generateShiftId } from "@/utils/format";
+import { getTodayWIB } from "@/utils/date";
 
 const OpenShiftSchema = z.object({
   modal_awal: z.number().positive().default(1_000_000),
@@ -104,15 +105,8 @@ export async function POST(req: NextRequest) {
 
   const { modal_awal, shift_period } = parsed.data;
 
-  // Tanggal hari ini dalam WIB — harus dihitung lebih dulu sebelum cek shift aktif
   const now = new Date();
-  const jakartaStr = now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
-  const jakartaDate = new Date(jakartaStr);
-  const todayDate = new Date(
-    jakartaDate.getFullYear(),
-    jakartaDate.getMonth(),
-    jakartaDate.getDate(),
-  );
+  const todayDate = getTodayWIB();
 
   // Cek apakah kasir ini masih punya shift aktif HARI INI.
   // PENDING_FINANCE tidak dianggap "aktif" — kasir sudah selesai tugasnya

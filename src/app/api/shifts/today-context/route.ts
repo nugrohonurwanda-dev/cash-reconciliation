@@ -21,6 +21,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/session";
 import { Role, ShiftPeriod, ShiftStatus } from "@prisma/client";
+import { getTodayWIB } from "@/utils/date";
 
 export async function GET() {
   const { session, error } = await requireRole(Role.CASHIER);
@@ -28,15 +29,7 @@ export async function GET() {
 
   const userId = session!.user.id;
 
-  // ── Hitung tanggal hari ini dalam WIB ──────────────────────────────────────
-  const now = new Date();
-  const jakartaStr = now.toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
-  const jakartaDate = new Date(jakartaStr);
-  const todayDate = new Date(
-    jakartaDate.getFullYear(),
-    jakartaDate.getMonth(),
-    jakartaDate.getDate(),
-  );
+  const todayDate = getTodayWIB();
 
   // ── Ambil data yang dibutuhkan secara paralel ──────────────────────────────
   const [myShiftToday, shift1Today, shift2Today] = await Promise.all([
