@@ -215,8 +215,14 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
     return { kategori: k, esb, fisik, selisih: fisik - esb };
   });
 
+  const DEPOSIT_CATEGORIES = ["DEPOSIT_BANK", "DEPOSIT_CASH"];
+
   const totalEsb = recon.reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.esb, 0);
   const totalFisik = recon.reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.fisik, 0);
+  // Sales only — exclude DEPOSIT_BANK / DEPOSIT_CASH (bukan omzet penjualan)
+  const totalFisikSales = recon
+    .filter((r) => !DEPOSIT_CATEGORIES.includes(r.kategori))
+    .reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.fisik, 0);
   const totalSelisih = totalFisik - totalEsb;
 
   const specialLogs = shift.special_logs ?? [];
@@ -229,8 +235,9 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
   const totalOtherCost = specialLogs
     .filter((l: any) => l.tipe === "OTHER_COST")
     .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
-  const totalOmzetBersih =
-    totalFisik - totalVoid - totalDiscount - totalOtherCost;
+  // Omzet bersih = fisik sales (exclude deposit) - void - discount
+  // other_cost TIDAK mengurangi omzet (konsisten dengan logic server/PDF)
+  const totalOmzetBersih = totalFisikSales - totalVoid - totalDiscount;
 
   const fmt = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
@@ -518,7 +525,6 @@ export default function ShiftDetailPage() {
   const [fisikLines, setFisikLines] = useState<TransactionLine[]>(emptyLines());
   const [varianceNote, setVarianceNote] = useState("");
   const [voidDiscountLogs, setVoidDiscountLogs] = useState<SpecialLog[]>([]);
-  const [depositLogs, setDepositLogs] = useState<SpecialLog[]>([]);
   const [otherCostLogs, setOtherCostLogs] = useState<SpecialLog[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
   const [draftExpired, setDraftExpired] = useState(false);
@@ -576,7 +582,6 @@ export default function ShiftDetailPage() {
                   setVarianceNote(draft.varianceNote);
                 if (draft.voidDiscountLogs)
                   setVoidDiscountLogs(draft.voidDiscountLogs);
-                if (draft.depositLogs) setDepositLogs(draft.depositLogs);
                 if (draft.otherCostLogs) setOtherCostLogs(draft.otherCostLogs);
               }
             }
@@ -612,7 +617,6 @@ export default function ShiftDetailPage() {
           fisikLines,
           varianceNote,
           voidDiscountLogs,
-          depositLogs,
           otherCostLogs,
           savedAt: new Date().toISOString(),
           expiresAt: Date.now() + DRAFT_TTL_MS,
@@ -633,7 +637,6 @@ export default function ShiftDetailPage() {
     fisikLines,
     varianceNote,
     voidDiscountLogs,
-    depositLogs,
     otherCostLogs,
     draftKey,
     DRAFT_TTL_MS,
@@ -937,7 +940,6 @@ export default function ShiftDetailPage() {
               setFisikLines(emptyLines());
               setVarianceNote("");
               setVoidDiscountLogs([]);
-              setDepositLogs([]);
               setOtherCostLogs([]);
               setDraftRestored(false);
             }}
