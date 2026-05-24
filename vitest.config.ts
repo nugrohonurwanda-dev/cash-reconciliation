@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [tsconfigPaths()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'), // 👈 tambahkan ini
+      '@': path.resolve(__dirname, './src'), 
     },
   },
   test: {
