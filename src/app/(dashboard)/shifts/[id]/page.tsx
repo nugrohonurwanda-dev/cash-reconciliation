@@ -226,9 +226,6 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
   const totalDiscount = specialLogs
     .filter((l: any) => l.tipe === "DISCOUNT")
     .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
-  const totalDeposit = specialLogs
-    .filter((l: any) => l.tipe === "DEPOSIT")
-    .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
   const totalOtherCost = specialLogs
     .filter((l: any) => l.tipe === "OTHER_COST")
     .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
@@ -322,11 +319,6 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
             color: "text-amber-600",
           },
           {
-            label: "Total Deposit",
-            value: totalDeposit,
-            color: "text-blue-600",
-          },
-          {
             label: "Total Other Cost",
             value: totalOtherCost,
             color: "text-violet-600",
@@ -396,9 +388,7 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
                           ? "bg-red-100 text-red-700"
                           : log.tipe === "DISCOUNT"
                             ? "bg-amber-100 text-amber-700"
-                            : log.tipe === "DEPOSIT"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-violet-100 text-violet-700"
+                            : "bg-violet-100 text-violet-700"
                       }`}
                     >
                       {log.tipe}
@@ -407,9 +397,7 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
                   <td className="px-4 py-3 text-[var(--text-secondary)]">
                     {log.tipe === "VOID" || log.tipe === "DISCOUNT"
                       ? `Bill: ${log.nomor_bill ?? "-"} — ${log.alasan ?? "-"}`
-                      : log.tipe === "DEPOSIT"
-                        ? `${log.nama_member ?? "-"} (${log.metode ?? "-"})`
-                        : `${log.kategori_biaya ?? "-"} — ${log.keterangan ?? "-"}`}
+                      : `${log.kategori_biaya ?? "-"} — ${log.keterangan ?? "-"}`}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-[var(--foreground)]">
                     {fmt(parseFloat(log.nominal))}
