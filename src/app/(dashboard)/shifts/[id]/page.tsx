@@ -857,6 +857,11 @@ export default function ShiftDetailPage() {
   const isPending =
     shift?.status === "PENDING" || shift?.status === "PENDING_FINANCE";
 
+  // Form input hanya boleh diakses oleh pemilik shift — tidak peduli role.
+  // Finance dan Head Cashier yang membuka halaman shift OPEN milik orang lain
+  // tidak boleh melihat atau mengisi form.
+  const isOwner = !!session?.user?.id && session.user.id === shift?.opened_by;
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "esb", label: "1. Data ESB" },
     { key: "fisik", label: "2. Data Fisik" },
@@ -970,8 +975,8 @@ export default function ShiftDetailPage() {
         </div>
       )}
 
-      {/* Tab panel — hanya saat OPEN */}
-      {!isClosed && !isPending && (
+      {/* Tab panel — hanya saat OPEN dan hanya untuk pemilik shift */}
+      {!isClosed && !isPending && isOwner && (
         <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
           {/* Tab nav */}
           <div className="flex border-b border-[var(--border)]">

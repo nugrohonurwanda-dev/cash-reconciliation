@@ -29,9 +29,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const shift = await prisma.shiftReport.findUnique({ where: { id } })
   if (!shift) return NextResponse.json({ error: 'Shift tidak ditemukan.' }, { status: 404 })
 
-  // CASHIER hanya boleh edit shift miliknya sendiri
-  // HEAD_CASHIER boleh edit semua shift (untuk koreksi)
-  if (session!.user.role === Role.CASHIER && shift.opened_by !== session!.user.id) {
+  // Saat shift OPEN, hanya pemilik shift (opener) yang boleh mengisi data —
+  // tidak peduli role-nya. HEAD_CASHIER dan FINANCE tidak boleh menulis ke
+  // shift orang lain selama masih OPEN.
+  if (shift.opened_by !== session!.user.id) {
     return NextResponse.json({ error: 'Kamu bukan pemilik shift ini.' }, { status: 403 })
   }
 

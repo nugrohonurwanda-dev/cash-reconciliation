@@ -58,7 +58,8 @@ export type Shift = {
   status: string;
   shift_period: "SHIFT_1" | "SHIFT_2";
   variance_note?: string;
-  opener?: { full_name: string };
+  opened_by: string;
+  opener?: { id: string; full_name: string; username: string };
   reconciliation?: ShiftTotals;       
   transaction_lines?: any[];
   special_logs?: any[];
@@ -72,4 +73,3 @@ export type SubmitTotals = {
   totalSelisih: number;
   isVarianceExceeded: boolean;
 };
-

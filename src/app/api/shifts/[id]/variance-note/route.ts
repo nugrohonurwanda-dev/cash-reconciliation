@@ -31,14 +31,11 @@ export async function PATCH(
     );
   }
 
-  if (
-    session!.user.role === Role.CASHIER &&
-    shift.opened_by !== session!.user.id
-  ) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  // Hanya pemilik shift yang boleh mengubah variance note — berlaku untuk semua role.
+  if (shift.opened_by !== session!.user.id) {
+    return NextResponse.json({ error: "Kamu bukan pemilik shift ini." }, { status: 403 });
   }
 
-  // GANTI JADI INI
   if (IMMUTABLE_SHIFT_STATUSES.includes(shift.status)) {
     return NextResponse.json(
       { error: `Shift berstatus ${shift.status} dan tidak dapat diubah.` },
