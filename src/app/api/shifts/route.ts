@@ -74,13 +74,6 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         opener: { select: { id: true, full_name: true, username: true } },
-        transaction_lines: true,
-        approvals: {
-          include: {
-            approver: { select: { id: true, full_name: true, role: true } },
-          },
-          orderBy: { timestamp: "asc" },
-        },
       },
       orderBy: { opened_at: "desc" },
       skip: (page - 1) * limit,

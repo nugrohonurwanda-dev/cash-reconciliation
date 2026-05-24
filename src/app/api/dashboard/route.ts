@@ -88,43 +88,55 @@ export async function GET(req: NextRequest) {
       dateFilter.lt = to;
     }
 
-    const where: { shift_date?: { gte?: Date; lt?: Date } } = {};
-    if (Object.keys(dateFilter).length > 0) where.shift_date = dateFilter;
+    const hasDateFilter = Object.keys(dateFilter).length > 0;
+    const shiftDateWhere = hasDateFilter ? { shift_date: dateFilter } : {};
 
-    const [shifts, pendingFinanceCount] = await prisma.$transaction([
-      prisma.shiftReport.findMany({
-        where,
-        include: {
-          opener: { select: { id: true, full_name: true } },
-          transaction_lines: true,
-        },
-        orderBy: { shift_date: "desc" },
-        take: 50,
-      }),
-      prisma.shiftReport.count({ where: { status: "PENDING_FINANCE" } }),
-    ]);
+    // Filter shift CLOSED sesuai tanggal — dipakai untuk agregasi omzet
+    const closedShiftFilter = {
+      status: "CLOSED" as const,
+      ...shiftDateWhere,
+    };
 
-    // Hitung total omzet cash vs bank (untuk shift CLOSED)
-    const closedShifts = shifts.filter((s) => s.status === "CLOSED");
-    let totalCash = 0;
-    let totalBank = 0;
-
-    for (const shift of closedShifts) {
-      const recon = calculateReconciliation(shift.transaction_lines);
-      for (const r of recon.per_kategori) {
-        if (r.kategori === "CASH") {
-          totalCash += parseFloat(r.fisik.toString());
-        } else {
-          totalBank += parseFloat(r.fisik.toString());
-        }
-      }
-    }
+    const [shifts, pendingFinanceCount, cashAggregate, bankAggregate] =
+      await prisma.$transaction([
+        // Daftar shift untuk display — semua status, max 50
+        prisma.shiftReport.findMany({
+          where: shiftDateWhere,
+          include: {
+            opener: { select: { id: true, full_name: true } },
+            transaction_lines: true,
+          },
+          orderBy: { shift_date: "desc" },
+          take: 50,
+        }),
+        // Count shift menunggu penutupan Finance
+        prisma.shiftReport.count({ where: { status: "PENDING_FINANCE" } }),
+        // Total omzet cash — agregasi di DB, hanya CLOSED, hanya FISIK, hanya CASH
+        prisma.transactionLine.aggregate({
+          where: {
+            sumber: "FISIK",
+            kategori: "CASH",
+            shift: closedShiftFilter,
+          },
+          _sum: { nilai: true },
+        }),
+        // Total omzet bank — agregasi di DB, hanya CLOSED, hanya FISIK,
+        // exclude CASH dan DEPOSIT (bukan omzet penjualan)
+        prisma.transactionLine.aggregate({
+          where: {
+            sumber: "FISIK",
+            kategori: { notIn: ["CASH", "DEPOSIT_BANK", "DEPOSIT_CASH"] },
+            shift: closedShiftFilter,
+          },
+          _sum: { nilai: true },
+        }),
+      ]);
 
     return NextResponse.json({
       role,
       pending_finance_count: pendingFinanceCount,
-      total_omzet_cash: totalCash,
-      total_omzet_bank: totalBank,
+      total_omzet_cash: Number(cashAggregate._sum.nilai ?? 0),
+      total_omzet_bank: Number(bankAggregate._sum.nilai ?? 0),
       shifts: shifts.map((s) => ({
         id: s.id,
         shift_date: s.shift_date,

@@ -9,12 +9,9 @@ export type TransactionLine = {
 };
 
 export type SpecialLog = {
-  tipe: "VOID" | "DISCOUNT" | "DEPOSIT" | "OTHER_COST";
+  tipe: "VOID" | "DISCOUNT" | "OTHER_COST";
   nomor_bill?: string;
   alasan?: string;
-  nama_member?: string;
-  metode?: string;
-  nomor_referensi?: string;
   kategori_biaya?: string;
   keterangan?: string;
   nominal: string;

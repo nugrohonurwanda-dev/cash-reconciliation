@@ -63,6 +63,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const sumber = lines[0].sumber
 
+  // Cek apakah sudah ada data lama untuk sumber ini — di luar $transaction
+  // agar bisa return error lebih awal tanpa membuka transaksi DB.
+  const existingCount = await prisma.transactionLine.count({
+    where: { shift_id: id, sumber },
+  })
+
+  if (existingCount > 0 && !reason?.trim()) {
+    return NextResponse.json(
+      {
+        error: 'Alasan edit wajib diisi karena data sebelumnya akan ditimpa.',
+        code: 'REASON_REQUIRED',
+      },
+      { status: 422 },
+    )
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     // Simpan snapshot data lama sebelum dihapus — untuk audit trail
     const oldLines = await tx.transactionLine.findMany({

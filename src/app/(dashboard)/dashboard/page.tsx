@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
-import { calculateReconciliation } from "@/lib/calculations";
 import Link from "next/link";
 import {
   formatRupiahDisplay,
@@ -45,7 +44,6 @@ export default async function DashboardPage() {
       where: { opened_by: userId },
       orderBy: { opened_at: "desc" },
       take: 5,
-      include: { transaction_lines: true },
     });
 
     const activeShift = shifts.find(
@@ -348,31 +346,35 @@ export default async function DashboardPage() {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const [pendingFinanceCount, closedToday] = await prisma.$transaction([
-      prisma.shiftReport.count({ where: { status: "PENDING_FINANCE" } }),
-      prisma.shiftReport.count({
-        where: { status: "CLOSED", closed_at: { gte: todayStart } },
-      }),
-    ]);
+    const [pendingFinanceCount, closedToday, cashAggregate, bankAggregate] =
+      await prisma.$transaction([
+        prisma.shiftReport.count({ where: { status: "PENDING_FINANCE" } }),
+        prisma.shiftReport.count({
+          where: { status: "CLOSED", closed_at: { gte: todayStart } },
+        }),
+        // Total omzet cash — agregasi di DB, hanya CLOSED, hanya FISIK, hanya CASH
+        prisma.transactionLine.aggregate({
+          where: {
+            sumber: "FISIK",
+            kategori: "CASH",
+            shift: { status: "CLOSED" },
+          },
+          _sum: { nilai: true },
+        }),
+        // Total omzet bank — agregasi di DB, hanya CLOSED, hanya FISIK,
+        // exclude CASH dan DEPOSIT (bukan omzet penjualan)
+        prisma.transactionLine.aggregate({
+          where: {
+            sumber: "FISIK",
+            kategori: { notIn: ["CASH", "DEPOSIT_BANK", "DEPOSIT_CASH"] },
+            shift: { status: "CLOSED" },
+          },
+          _sum: { nilai: true },
+        }),
+      ]);
 
-    const closedShifts = await prisma.shiftReport.findMany({
-      where: { status: "CLOSED" },
-      include: { transaction_lines: true },
-    });
-
-    let totalCash = 0;
-    let totalBank = 0;
-
-    for (const shift of closedShifts) {
-      const recon = calculateReconciliation(shift.transaction_lines);
-      for (const r of recon.per_kategori) {
-        if (r.kategori === "CASH") {
-          totalCash += parseFloat(r.fisik.toString());
-        } else {
-          totalBank += parseFloat(r.fisik.toString());
-        }
-      }
-    }
+    const totalCash = Number(cashAggregate._sum.nilai ?? 0);
+    const totalBank = Number(bankAggregate._sum.nilai ?? 0);
 
     const recentPendingFinance = await prisma.shiftReport.findMany({
       where: { status: "PENDING_FINANCE" },
