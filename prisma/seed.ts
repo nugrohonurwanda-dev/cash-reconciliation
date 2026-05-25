@@ -13,49 +13,44 @@ async function main() {
   const users = [
     {
       username: 'finance01',
-      full_name: 'Dewi Rahmawati',
+      full_name: 'Evita',
       role: Role.FINANCE,
       password: 'Finance@123',
     },
     {
       username: 'headcashier01',
-      full_name: 'Budi Santoso',
+      full_name: 'Tari',
       role: Role.HEAD_CASHIER,
       password: 'HeadCashier@123',
     },
-    {
-      username: 'headcashier02',
-      full_name: 'Ratna Sari',
-      role: Role.HEAD_CASHIER,
-      password: 'HeadCashier@123',
-    },
+
     {
       username: 'cashier01',
-      full_name: 'Andi Pratama',
+      full_name: 'Cellyna',
       role: Role.CASHIER,
       password: 'Cashier@123',
     },
     {
       username: 'cashier02',
-      full_name: 'Siti Nurhaliza',
+      full_name: 'Inggit',
       role: Role.CASHIER,
       password: 'Cashier@123',
     },
     {
       username: 'cashier03',
-      full_name: 'Reza Firmansyah',
+      full_name: 'Novi',
       role: Role.CASHIER,
       password: 'Cashier@123',
     },
     {
       username: 'cashier04',
-      full_name: 'Maya Kusuma',
+      full_name: 'Tanti',
       role: Role.CASHIER,
       password: 'Cashier@123',
     },
     {
       username: 'cashier05',
-      full_name: 'Fajar Nugroho',
+      full_name: 'Milla',
       role: Role.CASHIER,
       password: 'Cashier@123',
     },
@@ -81,7 +76,6 @@ async function main() {
   console.log('\nLogin credentials:')
   console.log('  Finance    : finance01       / Finance@123')
   console.log('  Head Kasir : headcashier01   / HeadCashier@123')
-  console.log('  Head Kasir : headcashier02   / HeadCashier@123')
   console.log('  Kasir 1-5  : cashier01-05    / Cashier@123')
 }
 
