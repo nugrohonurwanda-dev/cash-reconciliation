@@ -298,7 +298,7 @@ export default function NewShiftPage() {
                     isDisabled
                       ? p === "SHIFT_1"
                         ? "Shift 1 sudah berjalan atau tidak tersedia"
-                        : "Shift 2 belum bisa dibuka sebelum Shift 1 selesai"
+                        : "Shift 2 belum bisa dibuka sebelum kasir Shift 1 mengajukan laporan"
                       : undefined
                   }
                   className={[
@@ -334,7 +334,7 @@ export default function NewShiftPage() {
           {ctx?.can_open_shift1 && !ctx.can_open_shift2 && (
             <p className="text-xs text-[var(--text-tertiary)] flex items-center gap-1.5 mt-1">
               <InfoIcon className="w-3.5 h-3.5" />
-              Shift 2 baru bisa dibuka setelah Shift 1 selesai.
+              Shift 2 baru bisa dibuka setelah kasir Shift 1 mengajukan laporan.
             </p>
           )}
         </div>

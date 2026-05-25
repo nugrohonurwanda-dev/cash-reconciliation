@@ -129,9 +129,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Validasi SHIFT_2: Shift 1 harus sudah di-approve Head Cashier
-  // (status PENDING_FINANCE atau CLOSED). Tidak perlu tunggu Finance close
-  // karena handover kas fisik sudah terjadi saat HC approve.
+  // Validasi SHIFT_2: Shift 1 cukup sudah disubmit kasir (status PENDING,
+  // PENDING_FINANCE, atau CLOSED). Tidak perlu menunggu persetujuan Head Cashier
+  // — kasir Shift 2 langsung bisa mulai setelah Shift 1 selesai diisi.
   if (shift_period === ShiftPeriod.SHIFT_2) {
     const shift1Today = await prisma.shiftReport.findFirst({
       where: { shift_date: todayDate, shift_period: ShiftPeriod.SHIFT_1 },
@@ -148,6 +148,7 @@ export async function POST(req: NextRequest) {
     }
 
     const shift1Ready =
+      shift1Today.status === ShiftStatus.PENDING ||
       shift1Today.status === ShiftStatus.PENDING_FINANCE ||
       shift1Today.status === ShiftStatus.CLOSED;
 
@@ -155,8 +156,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Shift 1 hari ini belum disetujui Head Cashier. " +
-            "Shift 2 bisa dibuka setelah Shift 1 di-approve oleh Head Cashier.",
+            "Shift 1 hari ini masih berjalan. " +
+            "Shift 2 bisa dibuka setelah kasir Shift 1 menyelesaikan dan mengajukan laporannya.",
         },
         { status: 422 },
       );

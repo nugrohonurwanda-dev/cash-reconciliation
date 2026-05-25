@@ -82,17 +82,14 @@ export async function GET() {
     if (!shift1Today) {
       // Shift 1 sama sekali belum dibuka → hanya bisa buka Shift 1
       canOpenShift1 = true;
-    } else if (
-      shift1Today.status !== ShiftStatus.CLOSED &&
-      shift1Today.status !== ShiftStatus.PENDING_FINANCE
-    ) {
-      // Shift 1 masih OPEN atau PENDING (belum di-approve HC)
-      // → Shift 2 belum bisa dibuka
+    } else if (shift1Today.status === ShiftStatus.OPEN) {
+      // Shift 1 masih OPEN (kasir belum submit) → Shift 2 belum bisa dibuka
       blockedReason =
-        "Shift 1 hari ini belum disetujui Head Cashier. " +
-        "Shift 2 bisa dibuka setelah Shift 1 di-approve oleh Head Cashier.";
+        "Shift 1 hari ini masih berjalan. " +
+        "Shift 2 bisa dibuka setelah kasir Shift 1 menyelesaikan dan mengajukan laporannya.";
     } else {
-      // Shift 1 sudah di-approve HC (PENDING_FINANCE) atau sudah CLOSED sepenuhnya
+      // Shift 1 sudah disubmit kasir (PENDING, PENDING_FINANCE) atau sudah CLOSED
+      // → Shift 2 boleh dibuka oleh kasir lain (tanpa menunggu persetujuan HC)
       if (shift1Today.opened_by === userId) {
         // User INI yang mengerjakan Shift 1 → dilarang kerjakan Shift 2
         blockedReason =
