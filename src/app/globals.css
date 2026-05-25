@@ -68,3 +68,20 @@ body {
 .text-muted {
   color: var(--muted);
 }
+
+/* ── Active shift banner — dark mode aware ────────────────────────────────── */
+/* Light mode pakai emerald tones, dark mode otomatis adjust via overrides     */
+.shift-banner-active {
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.dark .shift-banner-active {
+  background-color: #052e16;
+  border-color: #166534;
+}
+
+.shift-banner-active .banner-title  { color: #166534; }
+.shift-banner-active .banner-sub    { color: #15803d; }
+.dark .shift-banner-active .banner-title { color: #86efac; }
+.dark .shift-banner-active .banner-sub   { color: #4ade80; }

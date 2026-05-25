@@ -114,33 +114,44 @@ export default function ReviewPage() {
           </div>
         ) : shifts.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-[var(--text-tertiary)] text-sm">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3"
+              style={{backgroundColor:"var(--surface-hover)"}}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                style={{color:"var(--text-tertiary)"}}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium" style={{color:"var(--text-secondary)"}}>
               Tidak ada laporan yang perlu direview
+            </p>
+            <p className="text-xs mt-1" style={{color:"var(--text-tertiary)"}}>
+              Semua laporan kasir sudah ditangani
             </p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
               <tr>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Tanggal
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Kasir
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Shift
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Jam Buka
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Modal Awal
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Aksi
                 </th>
               </tr>

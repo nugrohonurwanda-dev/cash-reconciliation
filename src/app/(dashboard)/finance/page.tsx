@@ -320,7 +320,7 @@ export default function FinancePage() {
             </div>
             <div>
               <p className="text-[var(--text-tertiary)] text-xs">Menunggu Finance</p>
-              <p className="text-amber-400 text-2xl font-bold mt-1">
+              <p className="text-amber-600 dark:text-amber-400 text-2xl font-bold mt-1">
                 {shifts.filter((s) => s.status === "PENDING_FINANCE").length}
               </p>
             </div>
@@ -338,7 +338,7 @@ export default function FinancePage() {
           <div className="p-8 text-center">
             <p className="text-[var(--text-tertiary)] text-sm">Tidak ada laporan</p>
             {filterMode !== "all" && (
-              <p className="text-[var(--border)] text-xs mt-1">
+              <p className="text-xs mt-1" style={{color:"var(--text-tertiary)"}}>
                 Coba ubah filter periode atau status
               </p>
             )}
@@ -347,22 +347,22 @@ export default function FinancePage() {
           <table className="w-full text-sm">
             <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
               <tr>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Tanggal
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Kasir
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Jam Buka
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Modal Awal
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Aksi
                 </th>
               </tr>
@@ -419,7 +419,7 @@ export default function FinancePage() {
                               setCatatan("");
                               setError("");
                             }}
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                            className="bg-[var(--surface-accent)] hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium px-3 py-1.5 rounded-lg transition"
                           >
                             Close & PDF
                           </button>

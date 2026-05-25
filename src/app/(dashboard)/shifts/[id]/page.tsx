@@ -141,7 +141,7 @@ function DailyAccumulationCard({
         <span className="text-right">Total</span>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-[var(--border)]">
         {data.combined.per_kategori.map((row) => {
           const s1 = data.shift_1?.per_kategori.find(
             (r) => r.kategori === row.kategori,
@@ -294,7 +294,7 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
                 </td>
               </tr>
             ))}
-            <tr className="border-t-2 border-[var(--border)] bg-blue-50">
+            <tr className="border-t-2 border-[var(--border)] bg-[var(--surface-accent)]">
               <td className="px-4 py-3 font-bold text-[var(--foreground)]">TOTAL</td>
               <td className="px-4 py-3 text-right font-bold text-[var(--foreground)]">
                 {fmt(totalEsb)}

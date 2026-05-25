@@ -208,29 +208,38 @@ export default function UsersPage() {
       {/* Table */}
       <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
-            Memuat data...
+          <div className="divide-y divide-[var(--border)]">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="px-4 py-3.5 flex items-center gap-4 animate-pulse">
+                <div className="h-3 rounded" style={{width:"18%",backgroundColor:"var(--surface-hover)"}} />
+                <div className="h-3 rounded" style={{width:"13%",backgroundColor:"var(--surface-hover)"}} />
+                <div className="h-5 rounded-full" style={{width:"10%",backgroundColor:"var(--surface-hover)"}} />
+                <div className="h-5 rounded-full" style={{width:"9%",backgroundColor:"var(--surface-hover)"}} />
+                <div className="h-3 rounded" style={{width:"12%",backgroundColor:"var(--surface-hover)"}} />
+                <div className="h-7 rounded-lg" style={{width:"8%",backgroundColor:"var(--surface-hover)"}} />
+              </div>
+            ))}
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
               <tr>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Nama
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Username
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Role
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Status
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Dibuat
                 </th>
-                <th className="text-left px-4 py-3 text-[var(--muted)] font-medium">
+                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
                   Aksi
                 </th>
               </tr>
