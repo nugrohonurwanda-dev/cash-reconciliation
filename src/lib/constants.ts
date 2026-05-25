@@ -73,11 +73,9 @@ export const CATEGORY_LABEL: Record<PaymentCategory, string> = {
 }
 
 // ─── Kategori yang TIDAK masuk sales / omzet ─────────────────────────────────
-// Deposit adalah uang titipan member, bukan pendapatan penjualan
-export const NON_SALES_CATEGORIES: PaymentCategory[] = [
-  PaymentCategory.DEPOSIT_BANK,
-  PaymentCategory.DEPOSIT_CASH,
-]
+// Deposit (BANK & CASH) kini DIHITUNG sebagai bagian dari omzet.
+// Array ini dikosongkan; tetap dipertahankan agar tidak perlu refactor sisi konsumer.
+export const NON_SALES_CATEGORIES: PaymentCategory[] = []
 
 // ─── Semua kategori yang termasuk sales ──────────────────────────────────────
 export const SALES_CATEGORIES: PaymentCategory[] = Object.values(

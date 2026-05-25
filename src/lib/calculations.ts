@@ -9,9 +9,9 @@
  *   3. Jika selisih negatif dan abs > Rp 50.000 → wajib keterangan
  *
  * Definisi Sales / Omzet Bersih:
- *   omzet_bersih = total_fisik (sales categories only) - total_void - total_discount
+ *   omzet_bersih = total_fisik (semua kategori, TERMASUK deposit) - total_void - total_discount
  *   other_cost   = dicatat terpisah, TIDAK mengurangi omzet (pengeluaran operasional)
- *   deposit      = bukan sales, masuk TransactionLine tapi dikecualikan dari omzet
+ *   deposit      = masuk omzet (total_fisik_sales mencakup DEPOSIT_BANK & DEPOSIT_CASH)
  */
 
 import { Decimal } from '@prisma/client/runtime/library'
@@ -70,7 +70,7 @@ export type SalesBreakdown = {
   // Other cost: pengeluaran operasional, TIDAK mengurangi omzet
   total_other_cost: Decimal
 
-  // Deposit: uang titipan member, bukan pendapatan
+  // Deposit: dicatat informatif; kini MASUK dalam omzet_kotor (total_fisik_sales)
   total_deposit: Decimal
 }
 
@@ -146,6 +146,7 @@ export function calculateReconciliation(lines: TransactionLine[]): ShiftTotals {
 
 /**
  * Hitung omzet bersih dan breakdown komponen sales dari satu shift.
+ * Deposit (DEPOSIT_BANK / DEPOSIT_CASH) MASUK dalam omzet_kotor.
  *
  * other_cost TIDAK mengurangi omzet — ini adalah pengeluaran operasional
  * yang dicatat sebagai informasi terpisah (bukan deduction dari revenue).

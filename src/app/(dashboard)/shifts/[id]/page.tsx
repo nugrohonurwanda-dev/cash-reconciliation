@@ -215,14 +215,10 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
     return { kategori: k, esb, fisik, selisih: fisik - esb };
   });
 
-  const DEPOSIT_CATEGORIES = ["DEPOSIT_BANK", "DEPOSIT_CASH"];
-
   const totalEsb = recon.reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.esb, 0);
   const totalFisik = recon.reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.fisik, 0);
-  // Sales only — exclude DEPOSIT_BANK / DEPOSIT_CASH (bukan omzet penjualan)
-  const totalFisikSales = recon
-    .filter((r) => !DEPOSIT_CATEGORIES.includes(r.kategori))
-    .reduce((sum: number, r: {esb: number; fisik: number; selisih: number; kategori: string}) => sum + r.fisik, 0);
+  // Semua kategori masuk omzet — deposit (DEPOSIT_BANK/DEPOSIT_CASH) kini dihitung sebagai bagian dari omzet
+  const totalFisikSales = totalFisik;
   const totalSelisih = totalFisik - totalEsb;
 
   const specialLogs = shift.special_logs ?? [];
@@ -235,7 +231,7 @@ function ReadOnlyView({ shift }: { shift: Shift }) {
   const totalOtherCost = specialLogs
     .filter((l: any) => l.tipe === "OTHER_COST")
     .reduce((sum: number, l: any) => sum + parseFloat(l.nominal), 0);
-  // Omzet bersih = fisik sales (exclude deposit) - void - discount
+  // Omzet bersih = total fisik (semua kategori, termasuk deposit) - void - discount
   // other_cost TIDAK mengurangi omzet (konsisten dengan logic server/PDF)
   const totalOmzetBersih = totalFisikSales - totalVoid - totalDiscount;
 

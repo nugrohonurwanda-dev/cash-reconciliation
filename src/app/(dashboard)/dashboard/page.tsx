@@ -10,6 +10,7 @@ import {
   STATUS_LABEL,
   SHIFT_PERIOD_LABEL,
 } from "@/utils/format";
+import { getTodayWIB } from "@/utils/date";
 
 function StatCard({
   label,
@@ -207,8 +208,7 @@ export default async function DashboardPage() {
 
   // ── HEAD CASHIER ──────────────────────────────────────────────────────────
   if (role === Role.HEAD_CASHIER) {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = getTodayWIB();
 
     const [pendingCount, todayShifts, approvedToday] =
       await prisma.$transaction([
@@ -343,8 +343,7 @@ export default async function DashboardPage() {
 
   // ── FINANCE ───────────────────────────────────────────────────────────────
   if (role === Role.FINANCE) {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = getTodayWIB();
 
     const [pendingFinanceCount, closedToday, cashAggregate, bankAggregate] =
       await prisma.$transaction([
@@ -362,11 +361,11 @@ export default async function DashboardPage() {
           _sum: { nilai: true },
         }),
         // Total omzet bank — agregasi di DB, hanya CLOSED, hanya FISIK,
-        // exclude CASH dan DEPOSIT (bukan omzet penjualan)
+        // exclude CASH saja (deposit kini masuk omzet)
         prisma.transactionLine.aggregate({
           where: {
             sumber: "FISIK",
-            kategori: { notIn: ["CASH", "DEPOSIT_BANK", "DEPOSIT_CASH"] },
+            kategori: { notIn: ["CASH"] },
             shift: { status: "CLOSED" },
           },
           _sum: { nilai: true },

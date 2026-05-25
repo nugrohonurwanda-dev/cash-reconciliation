@@ -100,6 +100,25 @@ export default function NotificationBell() {
     setUnread((prev) => Math.max(0, prev - 1))
   }
 
+  // ── Delete ──────────────────────────────────────────────────────────────────
+  async function deleteOne(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    const target = notifs.find((n) => n.id === id)
+    await fetch('/api/notifications', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [id] }),
+    })
+    setNotifs((prev) => prev.filter((n) => n.id !== id))
+    if (target && !target.is_read) setUnread((prev) => Math.max(0, prev - 1))
+  }
+
+  async function deleteAll() {
+    await fetch('/api/notifications', { method: 'DELETE' })
+    setNotifs([])
+    setUnread(0)
+  }
+
   const typeColor: Record<string, string> = {
     SHIFT_REJECTED:       'bg-red-500',
     SHIFT_APPROVED:       'bg-emerald-500',
@@ -131,14 +150,24 @@ export default function NotificationBell() {
           rounded-xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
             <span className="font-semibold text-sm text-[var(--foreground)]">Notifikasi</span>
-            {unread > 0 && (
-              <button
-                onClick={markAllRead}
-                className="text-xs text-blue-500 hover:text-blue-600 font-medium"
-              >
-                Tandai semua dibaca
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {unread > 0 && (
+                <button
+                  onClick={markAllRead}
+                  className="text-xs text-blue-500 hover:text-blue-600 font-medium"
+                >
+                  Tandai dibaca
+                </button>
+              )}
+              {notifs.length > 0 && (
+                <button
+                  onClick={deleteAll}
+                  className="text-xs text-red-400 hover:text-red-600 font-medium"
+                >
+                  Hapus semua
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
@@ -148,26 +177,43 @@ export default function NotificationBell() {
               </div>
             ) : (
               notifs.map((n) => (
-                <button
+                <div
                   key={n.id}
-                  onClick={() => markRead(n.id)}
-                  className={`w-full text-left px-4 py-3 border-b border-[var(--border)] last:border-0
+                  className={`group relative flex items-start border-b border-[var(--border)] last:border-0
                     hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors
                     ${!n.is_read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
                 >
-                  <div className="flex items-start gap-2">
-                    <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${typeColor[n.type] ?? 'bg-slate-400'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[var(--foreground)] leading-snug">{n.message}</p>
-                      <p className="text-xs text-[var(--muted)] mt-1">
-                        {formatDateTimeID(n.created_at)}
-                      </p>
+                  <button
+                    onClick={() => markRead(n.id)}
+                    className="flex-1 text-left px-4 py-3"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className={`mt-1 w-2 h-2 rounded-full shrink-0 ${typeColor[n.type] ?? 'bg-slate-400'}`} />
+                      <div className="flex-1 min-w-0 pr-5">
+                        <p className="text-sm text-[var(--foreground)] leading-snug">{n.message}</p>
+                        <p className="text-xs text-[var(--muted)] mt-1">
+                          {formatDateTimeID(n.created_at)}
+                        </p>
+                      </div>
+                      {!n.is_read && (
+                        <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1" />
+                      )}
                     </div>
-                    {!n.is_read && (
-                      <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 mt-1" />
-                    )}
-                  </div>
-                </button>
+                  </button>
+                  {/* Tombol hapus — muncul saat hover */}
+                  <button
+                    onClick={(e) => deleteOne(n.id, e)}
+                    title="Hapus notifikasi"
+                    className="absolute right-2 top-1/2 -translate-y-1/2
+                      opacity-0 group-hover:opacity-100 transition-opacity
+                      p-1 rounded text-[var(--muted)] hover:text-red-500 hover:bg-red-50
+                      dark:hover:bg-red-900/20"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               ))
             )}
           </div>

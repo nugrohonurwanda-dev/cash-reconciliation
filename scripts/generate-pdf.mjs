@@ -11,7 +11,7 @@
 //   selisih per kategori = Fisik - ESB  (positif = lebih, negatif = kurang)
 //   omzet_bersih = total_fisik_sales - void - discount
 //   other_cost   = pengeluaran operasional, TIDAK mengurangi omzet (dicatat terpisah)
-//   deposit      = titipan member, bukan pendapatan sales
+//   deposit      = MASUK omzet (DEPOSIT_BANK & DEPOSIT_CASH termasuk dalam total_fisik_sales)
 
 import { renderToBuffer } from '@react-pdf/renderer'
 import React from 'react'
@@ -66,7 +66,7 @@ const KATEGORI_LABEL = {
   DEPOSIT_CASH: 'Deposit Cash',
 }
 
-const NON_SALES  = ['DEPOSIT_BANK', 'DEPOSIT_CASH']
+const NON_SALES  = [] // deposit kini masuk omzet
 const ROLE_LABEL = { CASHIER: 'Kasir', HEAD_CASHIER: 'Head Kasir', FINANCE: 'Finance' }
 const TIPE_LABEL = { VOID: 'Void', DISCOUNT: 'Discount', OTHER_COST: 'Other Cost' }
 
@@ -528,7 +528,7 @@ function buildPDFDocument(data) {
 
       // Rekonsiliasi per Kategori
       ce(Text, { style: s.sectionTitle    }, 'Rekonsiliasi per Kategori'),
-      ce(Text, { style: s.sectionSubtitle }, '* Kategori bertanda bintang adalah deposit member — bukan pendapatan sales'),
+      ce(Text, { style: s.sectionSubtitle }, '* Deposit (Bank & Cash) kini dihitung sebagai bagian dari omzet'),
       ce(View, { style: s.table },
         ce(View, { style: s.thead },
           ce(Text, { style: { ...s.th,      flex: 2 } }, 'Kategori'),
@@ -599,8 +599,8 @@ function buildPDFDocument(data) {
       ...(totalDeposit > 0 ? [
         ce(View, { style: s.depositInfoBox },
           ce(Text, { style: s.depositInfoText },
-            `Deposit member (Bank + Cash) sebesar ${fmt(totalDeposit)} adalah uang titipan — ` +
-            'bukan pendapatan penjualan dan tidak dimasukkan dalam perhitungan omzet bersih.',
+            `Deposit member (Bank + Cash) sebesar ${fmt(totalDeposit)} sudah dimasukkan dalam omzet — ` +
+            'Jumlah ini sudah termasuk dalam perhitungan omzet bersih.',
           ),
         ),
       ] : []),

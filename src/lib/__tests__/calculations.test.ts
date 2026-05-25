@@ -207,8 +207,8 @@ describe('calculateReconciliation', () => {
     })
   })
 
-  describe('deposit dikecualikan dari sales', () => {
-    it('DEPOSIT_BANK tidak masuk total_fisik_sales', () => {
+  describe('deposit masuk sales (bukan dikecualikan)', () => {
+    it('DEPOSIT_BANK masuk total_fisik_sales', () => {
       const lines = [
         makeLine({ sumber: 'FISIK', kategori: 'CASH',         nilai: 500_000 }),
         makeLine({ sumber: 'FISIK', kategori: 'DEPOSIT_BANK', nilai: 200_000 }),
@@ -217,20 +217,22 @@ describe('calculateReconciliation', () => {
       ]
       const result = calculateReconciliation(lines)
 
-      expect(result.total_fisik_sales.toNumber()).toBe(500_000)
-      expect(result.total_esb_sales.toNumber()).toBe(500_000)
-      expect(result.total_deposit_fisik.toNumber()).toBe(200_000)
-      expect(result.total_deposit_esb.toNumber()).toBe(200_000)
+      // Deposit kini masuk total_fisik_sales
+      expect(result.total_fisik_sales.toNumber()).toBe(700_000)
+      expect(result.total_esb_sales.toNumber()).toBe(700_000)
+      // NON_SALES kosong → deposit tidak masuk total_deposit
+      expect(result.total_deposit_fisik.toNumber()).toBe(0)
+      expect(result.total_deposit_esb.toNumber()).toBe(0)
     })
 
-    it('DEPOSIT_CASH juga dikecualikan dari sales', () => {
+    it('DEPOSIT_CASH juga masuk sales', () => {
       const lines = [
         makeLine({ sumber: 'FISIK', kategori: 'DEPOSIT_CASH', nilai: 150_000 }),
       ]
       const result = calculateReconciliation(lines)
 
-      expect(result.total_fisik_sales.toNumber()).toBe(0)
-      expect(result.total_deposit_fisik.toNumber()).toBe(150_000)
+      expect(result.total_fisik_sales.toNumber()).toBe(150_000)
+      expect(result.total_deposit_fisik.toNumber()).toBe(0)
     })
   })
 
@@ -304,7 +306,7 @@ describe('calculateReconciliation', () => {
 describe('calculateSalesBreakdown', () => {
 
   describe('omzet bersih', () => {
-    it('omzet_kotor = total_fisik_sales saja (tidak termasuk deposit)', () => {
+    it('omzet_kotor = total_fisik_sales (semua kategori, termasuk deposit)', () => {
       const lines = [
         makeLine({ sumber: 'FISIK', kategori: 'CASH',         nilai: 2_000_000 }),
         makeLine({ sumber: 'FISIK', kategori: 'DEPOSIT_BANK', nilai:   500_000 }),
@@ -312,7 +314,8 @@ describe('calculateSalesBreakdown', () => {
       ]
       const result = calculateSalesBreakdown(lines, [])
 
-      expect(result.omzet_kotor.toNumber()).toBe(2_000_000)
+      // Deposit sekarang masuk omzet
+      expect(result.omzet_kotor.toNumber()).toBe(2_500_000)
     })
 
     it('omzet_bersih = omzet_kotor - void - discount', () => {
@@ -362,7 +365,7 @@ describe('calculateSalesBreakdown', () => {
   })
 
   describe('deposit di sales breakdown', () => {
-    it('total_deposit dari fisik saja, omzet_kotor tetap 0', () => {
+    it('omzet_kotor TERMASUK deposit, total_deposit = 0 (NON_SALES kosong)', () => {
       const lines = [
         makeLine({ sumber: 'FISIK', kategori: 'DEPOSIT_BANK', nilai: 300_000 }),
         makeLine({ sumber: 'FISIK', kategori: 'DEPOSIT_CASH', nilai: 200_000 }),
@@ -370,9 +373,11 @@ describe('calculateSalesBreakdown', () => {
       ]
       const result = calculateSalesBreakdown(lines, [])
 
-      expect(result.total_deposit.toNumber()).toBe(500_000)
-      expect(result.omzet_kotor.toNumber()).toBe(0)
-      expect(result.omzet_bersih.toNumber()).toBe(0)
+      // Deposit kini masuk omzet
+      expect(result.omzet_kotor.toNumber()).toBe(500_000)
+      expect(result.omzet_bersih.toNumber()).toBe(500_000)
+      // total_deposit = 0 karena NON_SALES kosong
+      expect(result.total_deposit.toNumber()).toBe(0)
     })
   })
 

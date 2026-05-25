@@ -9,6 +9,11 @@ const MarkReadSchema = z.object({
   ids: z.array(z.string()).optional(),
 });
 
+const DeleteSchema = z.object({
+  // Jika ids tidak dikirim → hapus semua milik user
+  ids: z.array(z.string()).optional(),
+});
+
 // ─── GET /api/notifications ───────────────────────────────────────────────────
 // Digunakan oleh NotificationBell untuk fetch daftar notif milik user yang login
 export async function GET() {
@@ -66,6 +71,36 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({
     message: `${result.count} notifikasi ditandai sudah dibaca.`,
+    count: result.count,
+  });
+}
+// ─── DELETE /api/notifications ────────────────────────────────────────────────
+// Hapus notifikasi milik user yang login.
+// Body: { ids: string[] } → hapus id tertentu
+// Body: {}               → hapus semua milik user
+export async function DELETE(req: NextRequest) {
+  const { session, error } = await requireSession();
+  if (error) return error;
+
+  const body = await req.json().catch(() => ({}));
+  const parsed = DeleteSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Input tidak valid", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const where =
+    parsed.data.ids && parsed.data.ids.length > 0
+      ? { user_id: session!.user.id, id: { in: parsed.data.ids } }
+      : { user_id: session!.user.id };
+
+  const result = await prisma.notification.deleteMany({ where });
+
+  return NextResponse.json({
+    message: `${result.count} notifikasi dihapus.`,
     count: result.count,
   });
 }

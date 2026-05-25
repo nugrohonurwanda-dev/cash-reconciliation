@@ -119,11 +119,11 @@ export async function GET(req: NextRequest) {
           _sum: { nilai: true },
         }),
         // Total omzet bank — agregasi di DB, hanya CLOSED, hanya FISIK,
-        // exclude CASH dan DEPOSIT (bukan omzet penjualan)
+        // exclude CASH saja (deposit kini masuk omzet)
         prisma.transactionLine.aggregate({
           where: {
             sumber: "FISIK",
-            kategori: { notIn: ["CASH", "DEPOSIT_BANK", "DEPOSIT_CASH"] },
+            kategori: { notIn: ["CASH"] },
             shift: closedShiftFilter,
           },
           _sum: { nilai: true },
