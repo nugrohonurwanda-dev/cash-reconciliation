@@ -41,7 +41,6 @@ export const PAYMENT_GROUPS = {
       PaymentCategory.TRANSFER_BRI,
       PaymentCategory.TRANSFER_BNI,
       PaymentCategory.TRANSFER_BCA,
-      PaymentCategory.TRANSFER_BSI,
     ],
   },
   DEPOSIT: {
@@ -67,7 +66,7 @@ export const CATEGORY_LABEL: Record<PaymentCategory, string> = {
   TRANSFER_BRI: 'Transfer BRI',
   TRANSFER_BNI: 'Transfer BNI',
   TRANSFER_BCA: 'Transfer BCA',
-  TRANSFER_BSI: 'Transfer BSI',
+  TRANSFER_BSI: 'Transfer BSI', // Tidak ditampilkan di UI — tidak digunakan
   DEPOSIT_BANK: 'Deposit Bank',
   DEPOSIT_CASH: 'Deposit Cash',
 }

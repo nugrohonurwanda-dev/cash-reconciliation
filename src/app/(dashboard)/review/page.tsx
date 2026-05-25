@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { STATUS_LABEL, SHIFT_PERIOD_LABEL } from "@/utils/format";
+import { SkeletonListPage } from "@/components/ui/LoadingSkeleton";
 
 export default function ReviewPage() {
   const router = useRouter();
@@ -109,9 +110,7 @@ export default function ReviewPage() {
       {/* Table */}
       <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
-            Memuat data...
-          </div>
+          <SkeletonListPage rows={6} />
         ) : shifts.length === 0 ? (
           <div className="p-8 text-center">
             <div className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3"

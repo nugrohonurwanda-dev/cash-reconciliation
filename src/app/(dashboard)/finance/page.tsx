@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { STATUS_LABEL } from "@/utils/format";
+import { SkeletonListPage } from "@/components/ui/LoadingSkeleton";
 
 // Daftar bulan untuk quick picker
 const MONTHS = [
@@ -331,9 +332,7 @@ export default function FinancePage() {
       {/* Table */}
       <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-[var(--text-tertiary)] text-sm">
-            Memuat data...
-          </div>
+          <SkeletonListPage rows={6} />
         ) : shifts.length === 0 ? (
           <div className="p-8 text-center">
             <p className="text-[var(--text-tertiary)] text-sm">Tidak ada laporan</p>

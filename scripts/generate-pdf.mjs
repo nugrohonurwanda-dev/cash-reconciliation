@@ -528,7 +528,6 @@ function buildPDFDocument(data) {
 
       // Rekonsiliasi per Kategori
       ce(Text, { style: s.sectionTitle    }, 'Rekonsiliasi per Kategori'),
-      ce(Text, { style: s.sectionSubtitle }, '* Deposit (Bank & Cash) kini dihitung sebagai bagian dari omzet'),
       ce(View, { style: s.table },
         ce(View, { style: s.thead },
           ce(Text, { style: { ...s.th,      flex: 2 } }, 'Kategori'),

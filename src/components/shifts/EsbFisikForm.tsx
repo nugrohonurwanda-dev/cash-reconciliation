@@ -1,10 +1,11 @@
 // src/components/shifts/EsbFisikForm.tsx
 "use client";
 
+import { useCallback } from "react";
 import { Tab, TransactionLine } from "@/types/shift";
 import { formatRupiah, parseRupiah } from "@/utils/format";
 
-// ─── 15 kategori sesuai PaymentCategory enum Prisma ──────────────────────────
+// ─── 14 kategori sesuai PaymentCategory enum Prisma (TRANSFER_BSI tidak ditampilkan) ─
 export const KATEGORI_GROUPS = [
   {
     group: "Cash",
@@ -34,20 +35,17 @@ export const KATEGORI_GROUPS = [
       { key: "TRANSFER_BRI", label: "Transfer BRI" },
       { key: "TRANSFER_BNI", label: "Transfer BNI" },
       { key: "TRANSFER_BCA", label: "Transfer BCA" },
-      { key: "TRANSFER_BSI", label: "Transfer BSI" },
     ],
   },
   {
     group: "Deposit",
     items: [
-      { key: "DEPOSIT_BANK", label: "Deposit Bank *" },
-      { key: "DEPOSIT_CASH", label: "Deposit Cash *" },
+      { key: "DEPOSIT_BANK", label: "Deposit Bank" },
+      { key: "DEPOSIT_CASH", label: "Deposit Cash" },
     ],
-    note: "* Deposit bukan termasuk omzet penjualan",
   },
 ] as const;
 
-// Urutan flat — harus identik dengan PaymentCategory enum di Prisma
 export const KATEGORI_LIST: string[] = KATEGORI_GROUPS.flatMap((g) =>
   g.items.map((item) => item.key),
 );
@@ -70,16 +68,46 @@ function fmt(n: number): string {
   return `Rp ${n.toLocaleString("id-ID")}`;
 }
 
+// ─── Enter-key navigation ─────────────────────────────────────────────────────
+// Cari semua input aktif dalam container [data-enter-form], pindah ke berikutnya.
+// Input terakhir → otomatis klik tombol [data-save-btn].
+
+function useEnterNav() {
+  return useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const form = e.currentTarget.closest<HTMLElement>("[data-enter-form]");
+    if (!form) return;
+
+    const inputs = Array.from(
+      form.querySelectorAll<HTMLInputElement>("input:not([disabled])"),
+    );
+    const currentIdx = inputs.indexOf(e.currentTarget);
+
+    if (currentIdx >= 0 && currentIdx < inputs.length - 1) {
+      const next = inputs[currentIdx + 1];
+      next.focus();
+      next.select(); // Pilih semua teks agar langsung bisa ketik ulang
+    } else {
+      // Input terakhir → trigger tombol simpan
+      form.querySelector<HTMLButtonElement>("[data-save-btn]")?.click();
+    }
+  }, []);
+}
+
 // ─── Input Rupiah ─────────────────────────────────────────────────────────────
 
 function InputRupiah({
   value,
   onChange,
   disabled = false,
+  onKeyDown,
 }: {
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="relative">
@@ -91,6 +119,7 @@ function InputRupiah({
         inputMode="numeric"
         value={value}
         onChange={(e) => onChange(formatRupiah(e.target.value))}
+        onKeyDown={onKeyDown}
         disabled={disabled}
         placeholder="0"
         className="w-full pl-9 pr-3 py-2 rounded-lg border border-[var(--border)] text-sm text-[var(--foreground)] placeholder:text-[var(--border)] outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:bg-[var(--surface-hover)] disabled:text-[var(--text-tertiary)] text-right"
@@ -120,15 +149,16 @@ function EsbTab({
   saveTransactions,
   saving,
 }: Pick<EsbFisikFormProps, "esbLines" | "updateEsbLine" | "saveTransactions" | "saving">) {
+  const handleEnter = useEnterNav();
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-[var(--muted)]">
         Masukkan nilai dari laporan mesin kasir (sistem ESB).
-        Nilai yang tidak ada bisa dikosongkan (dianggap Rp 0).
+        Nilai yang tidak ada bisa dikosongkan (dianggap Rp 0).{" "}
       </p>
 
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
-        {/* Header */}
+      <div data-enter-form className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         <div className="grid grid-cols-12 px-4 py-2.5 bg-[var(--surface-hover)] border-b border-[var(--border)] text-xs font-medium text-[var(--muted)]">
           <span className="col-span-4">Kategori</span>
           <span className="col-span-5 text-right pr-3">Nilai ESB (Sistem)</span>
@@ -154,18 +184,16 @@ function EsbTab({
                   <div className="col-span-5 pr-3">
                     <InputRupiah
                       value={nilai}
-                      onChange={(v) => {
-                        if (idx >= 0) updateEsbLine(idx, "nilai", v);
-                      }}
+                      onChange={(v) => { if (idx >= 0) updateEsbLine(idx, "nilai", v); }}
+                      onKeyDown={handleEnter}
                     />
                   </div>
                   <div className="col-span-3">
                     <input
                       type="text"
                       value={catatan}
-                      onChange={(e) => {
-                        if (idx >= 0) updateEsbLine(idx, "catatan", e.target.value);
-                      }}
+                      onChange={(e) => { if (idx >= 0) updateEsbLine(idx, "catatan", e.target.value); }}
+                      onKeyDown={handleEnter}
                       placeholder="Opsional"
                       className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition placeholder:text-[var(--text-tertiary)]"
                     />
@@ -173,20 +201,11 @@ function EsbTab({
                 </div>
               );
             })}
-
-            {"note" in group && group.note && (
-              <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100">
-                <p className="text-xs text-amber-600">{group.note}</p>
-              </div>
-            )}
           </div>
         ))}
 
-        {/* Grand total */}
         <div className="grid grid-cols-12 items-center px-4 py-3 bg-blue-50">
-          <span className="col-span-4 text-sm font-bold text-blue-900 pl-2">
-            Total ESB
-          </span>
+          <span className="col-span-4 text-sm font-bold text-blue-900 pl-2">Total ESB</span>
           <span className="col-span-5 text-right text-sm font-bold text-blue-900 pr-3">
             {fmt(grandTotal(esbLines))}
           </span>
@@ -196,6 +215,7 @@ function EsbTab({
 
       <div className="flex justify-end pt-2">
         <button
+          data-save-btn
           onClick={() => saveTransactions("ESB")}
           disabled={saving}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition"
@@ -216,10 +236,9 @@ function FisikTab({
   saveTransactions,
   saving,
   onBack,
-}: Pick<
-  EsbFisikFormProps,
-  "esbLines" | "fisikLines" | "updateFisikLine" | "saveTransactions" | "saving" | "onBack"
->) {
+}: Pick<EsbFisikFormProps, "esbLines" | "fisikLines" | "updateFisikLine" | "saveTransactions" | "saving" | "onBack">) {
+  const handleEnter = useEnterNav();
+
   const totalEsb = grandTotal(esbLines);
   const totalFisik = grandTotal(fisikLines);
   const totalSelisih = totalFisik - totalEsb;
@@ -228,11 +247,10 @@ function FisikTab({
     <div className="space-y-4">
       <p className="text-sm text-[var(--muted)]">
         Masukkan hasil hitung fisik — uang tunai, struk EDC, slip setoran.
-        Selisih dihitung otomatis per kategori.
+        Selisih dihitung otomatis per kategori.{" "}
       </p>
 
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
-        {/* Header */}
+      <div data-enter-form className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
         <div className="grid grid-cols-12 px-4 py-2.5 bg-[var(--surface-hover)] border-b border-[var(--border)] text-xs font-medium text-[var(--muted)]">
           <span className="col-span-4">Kategori</span>
           <span className="col-span-3 text-right pr-3">ESB (Sistem)</span>
@@ -261,20 +279,16 @@ function FisikTab({
                   <span className="col-span-4 text-sm text-[var(--text-secondary)] pl-2">
                     {item.label}
                   </span>
-                  {/* ESB read-only */}
                   <span className="col-span-3 text-right text-sm text-[var(--text-tertiary)] pr-3">
                     {esb > 0 ? fmt(esb) : <span className="text-[var(--border)]">Rp 0</span>}
                   </span>
-                  {/* Input Fisik */}
                   <div className="col-span-3 pr-3">
                     <InputRupiah
                       value={fisikNilai}
-                      onChange={(v) => {
-                        if (idx >= 0) updateFisikLine(idx, "nilai", v);
-                      }}
+                      onChange={(v) => { if (idx >= 0) updateFisikLine(idx, "nilai", v); }}
+                      onKeyDown={handleEnter}
                     />
                   </div>
-                  {/* Selisih realtime */}
                   <span
                     className={`col-span-2 text-right text-sm font-medium ${
                       !hasInput
@@ -286,42 +300,21 @@ function FisikTab({
                             : "text-[var(--text-tertiary)]"
                     }`}
                   >
-                    {hasInput
-                      ? `${selisih >= 0 ? "+" : ""}${fmt(selisih)}`
-                      : "—"}
+                    {hasInput ? `${selisih >= 0 ? "+" : ""}${fmt(selisih)}` : "—"}
                   </span>
                 </div>
               );
             })}
-
-            {"note" in group && group.note && (
-              <div className="px-4 py-1.5 bg-amber-50 border-b border-amber-100">
-                <p className="text-xs text-amber-600">{group.note}</p>
-              </div>
-            )}
           </div>
         ))}
 
-        {/* Grand total */}
         <div className="grid grid-cols-12 items-center px-4 py-3 bg-blue-50">
-          <span className="col-span-4 text-sm font-bold text-blue-900 pl-2">
-            Total Keseluruhan
-          </span>
-          <span className="col-span-3 text-right text-sm font-bold text-blue-700 pr-3">
-            {fmt(totalEsb)}
-          </span>
-          <span className="col-span-3 text-right text-sm font-bold text-blue-900 pr-3">
-            {fmt(totalFisik)}
-          </span>
-          <span
-            className={`col-span-2 text-right text-sm font-bold ${
-              totalSelisih < 0
-                ? "text-red-600"
-                : totalSelisih > 0
-                  ? "text-emerald-600"
-                  : "text-blue-900"
-            }`}
-          >
+          <span className="col-span-4 text-sm font-bold text-blue-900 pl-2">Total Keseluruhan</span>
+          <span className="col-span-3 text-right text-sm font-bold text-blue-700 pr-3">{fmt(totalEsb)}</span>
+          <span className="col-span-3 text-right text-sm font-bold text-blue-900 pr-3">{fmt(totalFisik)}</span>
+          <span className={`col-span-2 text-right text-sm font-bold ${
+            totalSelisih < 0 ? "text-red-600" : totalSelisih > 0 ? "text-emerald-600" : "text-blue-900"
+          }`}>
             {`${totalSelisih >= 0 ? "+" : ""}${fmt(totalSelisih)}`}
           </span>
         </div>
@@ -335,6 +328,7 @@ function FisikTab({
           ← Kembali ke ESB
         </button>
         <button
+          data-save-btn
           onClick={() => saveTransactions("FISIK")}
           disabled={saving}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium px-6 py-2.5 rounded-lg transition"

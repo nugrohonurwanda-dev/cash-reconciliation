@@ -8,13 +8,14 @@ import { formatRupiah, parseRupiah } from "@/utils/format";
 import EsbFisikForm from "@/components/shifts/EsbFisikForm";
 import SpecialLogsPanel from "@/components/shifts/SpecialLogsPanel";
 import SubmitPanel from "@/components/shifts/SubmitPanel";
+import { SkeletonShiftDetail } from "@/components/ui/LoadingSkeleton";
 
 // ─── 15 kategori payment — harus sama dengan PaymentCategory enum Prisma ──────
 const KATEGORI_LIST: string[] = [
   "CASH",
   "EDC_BRI", "EDC_BNI", "EDC_BCA", "EDC_BSI",
   "QRIS_BRI", "QRIS_BNI", "QRIS_BCA", "QRIS_BSI",
-  "TRANSFER_BRI", "TRANSFER_BNI", "TRANSFER_BCA", "TRANSFER_BSI",
+  "TRANSFER_BRI", "TRANSFER_BNI", "TRANSFER_BCA",
   "DEPOSIT_BANK", "DEPOSIT_CASH",
 ];
 
@@ -74,7 +75,6 @@ const KATEGORI_LABEL_RO: Record<string, string> = {
   TRANSFER_BRI: "Transfer BRI",
   TRANSFER_BNI: "Transfer BNI",
   TRANSFER_BCA: "Transfer BCA",
-  TRANSFER_BSI: "Transfer BSI",
   DEPOSIT_BANK: "Deposit Bank",
   DEPOSIT_CASH: "Deposit Cash",
 };
@@ -118,7 +118,6 @@ function DailyAccumulationCard({
     TRANSFER_BRI: "Transfer BRI",
     TRANSFER_BNI: "Transfer BNI",
     TRANSFER_BCA: "Transfer BCA",
-    TRANSFER_BSI: "Transfer BSI",
     DEPOSIT_BANK: "Deposit Bank",
     DEPOSIT_CASH: "Deposit Cash",
   };
@@ -834,8 +833,8 @@ export default function ShiftDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-[var(--text-tertiary)] text-sm">Memuat data shift...</div>
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <SkeletonShiftDetail />
       </div>
     );
   }
