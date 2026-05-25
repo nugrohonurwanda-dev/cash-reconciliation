@@ -453,13 +453,6 @@ export function buildPDFDocument(data: PDFData) {
   const totalSelisih = safeNum(recon.total_selisih);
   const totalEsb = safeNum(recon.total_esb);
   const totalFisik = safeNum(recon.total_fisik);
-  const chipSelisihValStyle =
-    totalSelisih < 0
-      ? s.chipValRed
-      : totalSelisih > 0
-        ? s.chipValGreen
-        : s.chipValNeutral;
-  const chipSelisihBgStyle = totalSelisih > 0 ? s.chipGreen : s.chipNeutral;
 
   const reconRows = recon.per_kategori.map((r, i) => {
     const sel = safeNum(r.selisih);
@@ -714,32 +707,7 @@ export function buildPDFDocument(data: PDFData) {
           ),
         ),
       ),
-      ce(
-        View,
-        { style: s.chipRow },
-        ce(
-          View,
-          { style: s.chipBlue },
-          ce(Text, { style: s.chipLabel }, "Total ESB"),
-          ce(Text, { style: s.chipValBlue }, fmt(totalEsb)),
-        ),
-        ce(
-          View,
-          { style: s.chipGreen },
-          ce(Text, { style: s.chipLabel }, "Total Fisik"),
-          ce(Text, { style: s.chipValGreen }, fmt(totalFisik)),
-        ),
-        ce(
-          View,
-          { style: chipSelisihBgStyle },
-          ce(Text, { style: s.chipLabel }, "Selisih"),
-          ce(
-            Text,
-            { style: chipSelisihValStyle },
-            `${totalSelisih >= 0 ? "+" : ""}${fmt(totalSelisih)}`,
-          ),
-        ),
-      ),
+
       ...(dailyAccumulation
         ? [
             ce(
@@ -805,12 +773,6 @@ export function buildPDFDocument(data: PDFData) {
           { style: s.logCard },
           ce(Text, { style: s.logLabel }, "Total Discount"),
           ce(Text, { style: s.logValAmber }, fmt(totalDiscount)),
-        ),
-        ce(
-          View,
-          { style: s.logCard },
-          ce(Text, { style: s.logLabel }, "Total Deposit"),
-          ce(Text, { style: s.logValBlue }, fmt(totalDeposit)),
         ),
         ce(
           View,
