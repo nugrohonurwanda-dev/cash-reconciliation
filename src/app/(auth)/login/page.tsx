@@ -526,7 +526,6 @@ export default function LoginPage() {
                 Lupa password? Hubungi <strong>Finance</strong> untuk reset.
               </div>
             </form>
-
             <span className="version-tag">Cash Reconciliation Management System v1.0</span>
           </div>
         </div>

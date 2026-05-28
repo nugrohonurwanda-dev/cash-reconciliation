@@ -80,3 +80,37 @@ export const NON_SALES_CATEGORIES: PaymentCategory[] = []
 export const SALES_CATEGORIES: PaymentCategory[] = Object.values(
   PaymentCategory,
 ).filter((c) => !NON_SALES_CATEGORIES.includes(c))
+
+// ─── Label aksi approval ──────────────────────────────────────────────────────
+export const ACTION_LABEL: Record<string, string> = {
+  APPROVE: 'Approve',
+  REJECT:  'Reject',
+  CLOSE:   'Close',
+}
+
+// ─── Label role untuk display ─────────────────────────────────────────────────
+export const ROLE_LABEL: Record<string, string> = {
+  CASHIER:      'Kasir',
+  HEAD_CASHIER: 'Head Kasir',
+  FINANCE:      'Finance',
+}
+
+// ─── Konfigurasi badge status shift ──────────────────────────────────────────
+export const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  OPEN: {
+    label: 'Open',
+    color: 'bg-emerald-100 text-emerald-700',
+  },
+  PENDING: {
+    label: 'Menunggu Review',
+    color: 'bg-amber-100 text-amber-700',
+  },
+  PENDING_FINANCE: {
+    label: 'Menunggu Finance',
+    color: 'bg-violet-100 text-violet-700',
+  },
+  CLOSED: {
+    label: 'Closed',
+    color: 'bg-[var(--surface-hover)] text-[var(--text-secondary)]',
+  },
+}
