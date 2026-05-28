@@ -229,13 +229,53 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
-            label="Shift Aktif"
+            label="Status Shift"
             value={activeShift ? STATUS_LABEL[activeShift.status]?.label : "Tidak ada"}
-            sub={activeShift ? "Sedang berjalan" : "Buka shift untuk mulai"}
-            accentColor={activeShift ? "#10b981" : "#94a3b8"}
-            iconBg={activeShift ? "#d1fae5" : "var(--surface-hover)"}
-            iconColor={activeShift ? "#059669" : "var(--muted)"}
-            valueColor={activeShift ? "#059669" : "var(--text-tertiary)"}
+            sub={
+              !activeShift
+                ? "Buka shift untuk mulai"
+                : activeShift.status === "OPEN"
+                ? "Sedang berjalan"
+                : activeShift.status === "PENDING"
+                ? "Menunggu review Head Kasir"
+                : "Menunggu finalisasi Finance"
+            }
+            accentColor={
+              !activeShift
+                ? "#94a3b8"
+                : activeShift.status === "OPEN"
+                ? "#10b981"
+                : activeShift.status === "PENDING"
+                ? "#f59e0b"
+                : "#8b5cf6"
+            }
+            iconBg={
+              !activeShift
+                ? "var(--surface-hover)"
+                : activeShift.status === "OPEN"
+                ? "#d1fae5"
+                : activeShift.status === "PENDING"
+                ? "#fef3c7"
+                : "#ede9fe"
+            }
+            iconColor={
+              !activeShift
+                ? "var(--muted)"
+                : activeShift.status === "OPEN"
+                ? "#059669"
+                : activeShift.status === "PENDING"
+                ? "#d97706"
+                : "#7c3aed"
+            }
+            valueColor={
+              !activeShift
+                ? "var(--text-tertiary)"
+                : activeShift.status === "OPEN"
+                ? "#059669"
+                : activeShift.status === "PENDING"
+                ? "#d97706"
+                : "#7c3aed"
+            }
             icon={<IconCheck />}
           />
           <StatCard
@@ -260,40 +300,86 @@ export default async function DashboardPage() {
 
         {/* Active shift banner */}
         {activeShift ? (
-          <div
-            className="rounded-xl p-5 flex items-center justify-between"
-            style={{
-              backgroundColor: "#f0fdf4",
-              border: "1px solid #86efac",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              {/* Pulse dot */}
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-              </span>
-              <div>
-                <p className="text-sm font-medium text-emerald-800">
-                  Shift sedang berjalan
-                </p>
-                <p className="text-xs text-emerald-600 mt-0.5">
-                  Dibuka pukul{" "}
-                  {new Date(activeShift.opened_at).toLocaleTimeString("id-ID", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  · {SHIFT_PERIOD_LABEL[activeShift.shift_period]?.label ?? activeShift.shift_period}
-                </p>
+          (() => {
+            const isOpen = activeShift.status === "OPEN";
+            const isPending = activeShift.status === "PENDING";
+            // isPendingFinance = PENDING_FINANCE
+
+            const bannerBg = isOpen
+              ? "#f0fdf4"
+              : isPending
+              ? "#fffbeb"
+              : "#faf5ff";
+            const bannerBorder = isOpen
+              ? "#86efac"
+              : isPending
+              ? "#fcd34d"
+              : "#d8b4fe";
+            const dotColor = isOpen
+              ? "bg-emerald-500"
+              : isPending
+              ? "bg-amber-500"
+              : "bg-violet-500";
+            const dotPingColor = isOpen
+              ? "bg-emerald-400"
+              : isPending
+              ? "bg-amber-400"
+              : "bg-violet-400";
+            const titleColor = isOpen
+              ? "text-emerald-800"
+              : isPending
+              ? "text-amber-800"
+              : "text-violet-800";
+            const subColor = isOpen
+              ? "text-emerald-600"
+              : isPending
+              ? "text-amber-600"
+              : "text-violet-600";
+            const btnClass = isOpen
+              ? "bg-emerald-600 hover:bg-emerald-700"
+              : isPending
+              ? "bg-amber-600 hover:bg-amber-700"
+              : "bg-violet-600 hover:bg-violet-700";
+            const title = isOpen
+              ? "Shift sedang berjalan"
+              : isPending
+              ? "Laporan menunggu review Head Kasir"
+              : "Laporan menunggu finalisasi Finance";
+            const btnLabel = isOpen ? "Lanjutkan →" : "Lihat Detail →";
+
+            return (
+              <div
+                className="rounded-xl p-5 flex items-center justify-between gap-4"
+                style={{ backgroundColor: bannerBg, border: `1px solid ${bannerBorder}` }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    {isOpen && (
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${dotPingColor} opacity-75`} />
+                    )}
+                    <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${dotColor}`} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className={`text-sm font-medium ${titleColor}`}>{title}</p>
+                    <p className={`text-xs mt-0.5 ${subColor}`}>
+                      Dibuka pukul{" "}
+                      {new Date(activeShift.opened_at).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}{" "}
+                      · {SHIFT_PERIOD_LABEL[activeShift.shift_period]?.label ?? activeShift.shift_period}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={`/shifts/${activeShift.id}`}
+                  className={`${btnClass} text-white text-sm font-medium px-4 py-2 rounded-lg transition shrink-0`}
+                >
+                  {btnLabel}
+                </Link>
               </div>
-            </div>
-            <Link
-              href={`/shifts/${activeShift.id}`}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition shrink-0"
-            >
-              Lanjutkan →
-            </Link>
-          </div>
+            );
+          })()
         ) : (
           <div
             className="rounded-xl border p-6 text-center"
@@ -427,7 +513,7 @@ export default async function DashboardPage() {
           <StatCard
             label="Shift Hari Ini"
             value={todayShifts}
-            sub={formatTanggalWIB()}
+            sub={todayShifts === 0 ? "Belum ada shift dibuka" : todayShifts === 1 ? "1 dari 2 slot terisi" : "Kedua slot sudah terisi"}
             accentColor="#3b82f6"
             iconBg="#dbeafe"
             iconColor="#2563eb"
@@ -487,7 +573,7 @@ export default async function DashboardPage() {
                       })}
                     </td>
                     <td className="px-4 py-3">
-                      <Link href="/review" className="text-sm font-medium transition-colors"
+                      <Link href={`/shifts/${shift.id}`} className="text-sm font-medium transition-colors"
                         style={{ color: "var(--primary)" }}>
                         Review →
                       </Link>
@@ -520,14 +606,18 @@ export default async function DashboardPage() {
           where: { status: "CLOSED", closed_at: { gte: todayStart } },
         }),
         prisma.transactionLine.aggregate({
-          where: { sumber: "FISIK", kategori: "CASH", shift: { status: "CLOSED" } },
+          where: {
+            sumber: "FISIK",
+            kategori: "CASH",
+            shift: { status: "CLOSED", closed_at: { gte: todayStart } },
+          },
           _sum: { nilai: true },
         }),
         prisma.transactionLine.aggregate({
           where: {
             sumber: "FISIK",
             kategori: { notIn: ["CASH"] },
-            shift: { status: "CLOSED" },
+            shift: { status: "CLOSED", closed_at: { gte: todayStart } },
           },
           _sum: { nilai: true },
         }),
@@ -569,18 +659,18 @@ export default async function DashboardPage() {
             icon={<IconCheck />}
           />
           <StatCard
-            label="Total Omzet Cash"
+            label="Omzet Cash Hari Ini"
             value={formatRupiahDisplay(totalCash)}
-            sub="Semua shift closed"
+            sub={closedToday > 0 ? `dari ${closedToday} shift closed` : "Belum ada shift closed"}
             accentColor="#3b82f6"
             iconBg="#dbeafe"
             iconColor="#2563eb"
             icon={<IconMoney />}
           />
           <StatCard
-            label="Total Omzet Bank"
+            label="Omzet Bank Hari Ini"
             value={formatRupiahDisplay(totalBank)}
-            sub="Semua shift closed"
+            sub={closedToday > 0 ? `dari ${closedToday} shift closed` : "Belum ada shift closed"}
             accentColor="#8b5cf6"
             iconBg="#ede9fe"
             iconColor="#7c3aed"

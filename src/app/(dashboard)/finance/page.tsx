@@ -1,29 +1,43 @@
 //src/app/(dashboard)/finance/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { STATUS_LABEL } from "@/utils/format";
+import { STATUS_LABEL, SHIFT_PERIOD_LABEL } from "@/utils/format";
 import { SkeletonListPage } from "@/components/ui/LoadingSkeleton";
 
 // Daftar bulan untuk quick picker
 const MONTHS = [
-  "Januari",
-  "Februari",
-  "Maret",
-  "April",
-  "Mei",
-  "Juni",
-  "Juli",
-  "Agustus",
-  "September",
-  "Oktober",
-  "November",
-  "Desember",
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
 
 function fmt(n: number) {
   return `Rp ${n.toLocaleString("id-ID")}`;
+}
+
+// ── Hitung selisih hari dari opened_at ke sekarang ────────────────────────────
+function agingDays(openedAt: string): number {
+  const diff = Date.now() - new Date(openedAt).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
+function AgingBadge({ openedAt }: { openedAt: string }) {
+  const days = agingDays(openedAt);
+  if (days === 0) {
+    return <span className="text-xs text-[var(--text-tertiary)]">Hari ini</span>;
+  }
+  const color =
+    days >= 3
+      ? "bg-red-100 text-red-700"
+      : days >= 2
+      ? "bg-amber-100 text-amber-700"
+      : "bg-[var(--surface-hover)] text-[var(--text-tertiary)]";
+  return (
+    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>
+      {days}h lalu
+    </span>
+  );
 }
 
 export default function FinancePage() {
@@ -35,29 +49,29 @@ export default function FinancePage() {
   const [catatan, setCatatan] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [fetchTick, setFetchTick] = useState(0); // trigger refetch manual
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   // Filter tanggal
   const now = new Date();
-  const [filterMode, setFilterMode] = useState<"all" | "month" | "range">(
-    "all",
-  );
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+  const [filterMode, setFilterMode] = useState<"all" | "month" | "range">("all");
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // Summary kalkulasi dari data yang sudah di-fetch
-  const closedShifts = shifts.filter((s) => s.status === "CLOSED");
-  const totalModalAwal = closedShifts.reduce(
-    (sum, s) => sum + parseInt(s.modal_awal ?? "0"),
-    0,
-  );
-
+  // Reset halaman saat filter berubah
   useEffect(() => {
-    // buildParams di dalam useEffect agar selalu baca state terbaru (hindari stale closure)
+    setCurrentPage(1);
+  }, [statusFilter, filterMode, selectedMonth, selectedYear, dateFrom, dateTo]);
+
+  const fetchShifts = useCallback(() => {
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
+    params.set("page", String(currentPage));
 
     if (filterMode === "month") {
       const from = new Date(selectedYear, selectedMonth, 1);
@@ -69,70 +83,53 @@ export default function FinancePage() {
       if (dateTo) params.set("to", dateTo);
     }
 
-    const qs = params.toString();
-
     setLoading(true);
     setError("");
-    fetch(`/api/shifts${qs ? `?${qs}` : ""}`)
+    fetch(`/api/shifts?${params.toString()}`)
       .then((res) => {
         if (!res.ok)
-          return res
-            .json()
-            .then((d) => Promise.reject(d.error ?? "Gagal memuat data."));
+          return res.json().then((d) => Promise.reject(d.error ?? "Gagal memuat data."));
         return res.json();
       })
       .then((data) => {
         setShifts(data.data ?? []);
+        setTotalPages(data.meta?.total_pages ?? 1);
+        setTotalRecords(data.meta?.total ?? 0);
       })
       .catch((msg) => {
         setError(typeof msg === "string" ? msg : "Terjadi kesalahan jaringan.");
       })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [
-    statusFilter,
-    filterMode,
-    selectedMonth,
-    selectedYear,
-    dateFrom,
-    dateTo,
-    fetchTick,
-  ]);
+      .finally(() => setLoading(false));
+  }, [statusFilter, filterMode, selectedMonth, selectedYear, dateFrom, dateTo, currentPage]);
 
-  function fetchShifts() {
-    // Increment tick → trigger useEffect yang sudah punya semua state terbaru
-    setFetchTick((t) => t + 1);
-  }
+  useEffect(() => {
+    fetchShifts();
+  }, [fetchShifts]);
 
   async function handleClose() {
     if (!actionShift) return;
     setSaving(true);
     setError("");
-
     try {
       const res = await fetch(`/api/shifts/${actionShift.id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "CLOSE", catatan }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error ?? "Gagal menutup laporan.");
         return;
       }
-
-      const closedId = actionShift.id; // simpan sebelum state di-reset
+      const closedId = actionShift.id;
       setActionShift(null);
       setCatatan("");
       fetchShifts();
-      await openPDF(closedId); // ← auto-download PDF setelah shift CLOSED
+      await openPDF(closedId);
     } catch {
       setError("Terjadi kesalahan jaringan. Coba lagi.");
     } finally {
-      setSaving(false); // ← selalu jalan, tombol tidak akan stuck
+      setSaving(false);
     }
   }
 
@@ -140,12 +137,8 @@ export default function FinancePage() {
     try {
       const res = await fetch(`/api/shifts/${shiftId}/pdf`);
       if (!res.ok) {
-        // Tangani error JSON maupun HTML 500
         const errData = await res.json().catch(() => null);
-        const errMsg =
-          errData?.error ??
-          (await res.text()).slice(0, 200) ??
-          "Gagal membuka PDF.";
+        const errMsg = errData?.error ?? "Gagal membuka PDF.";
         setError(errMsg);
         return;
       }
@@ -154,7 +147,7 @@ export default function FinancePage() {
       const a = document.createElement("a");
       a.href = url;
       a.download = `laporan-shift-${shiftId}.pdf`;
-      document.body.appendChild(a); // ← Wajib untuk kompatibilitas browser
+      document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
@@ -162,19 +155,23 @@ export default function FinancePage() {
       setError("Gagal mengunduh laporan. Periksa koneksi atau coba lagi.");
     }
   }
-  // Label periode aktif untuk summary header
+
   function periodLabel() {
-    if (filterMode === "month") {
-      return `${MONTHS[selectedMonth]} ${selectedYear}`;
-    }
+    if (filterMode === "month") return `${MONTHS[selectedMonth]} ${selectedYear}`;
     if (filterMode === "range" && dateFrom && dateTo) {
       return `${new Date(dateFrom).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} — ${new Date(dateTo).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}`;
     }
     return "Semua Periode";
   }
 
-  // Tahun untuk dropdown (5 tahun ke belakang)
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
+
+  // Summary: hitung dari data halaman ini (selalu ditampilkan)
+  const pendingCount = shifts.filter((s) => s.status === "PENDING_FINANCE").length;
+  const closedCount = shifts.filter((s) => s.status === "CLOSED").length;
+  const totalModalAwalClosed = shifts
+    .filter((s) => s.status === "CLOSED")
+    .reduce((sum, s) => sum + parseInt(s.modal_awal ?? "0"), 0);
 
   return (
     <div className="space-y-6">
@@ -186,9 +183,14 @@ export default function FinancePage() {
         </p>
       </div>
 
+      {error && !actionShift && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 space-y-4">
-        {/* Baris 1: Status + Mode Filter */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Status filter */}
           <div className="flex gap-2">
@@ -199,7 +201,7 @@ export default function FinancePage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                   statusFilter === s
                     ? "bg-blue-600 text-white"
-                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:bg-[var(--surface-hover)]"
+                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 {s === "" ? "Semua Status" : (STATUS_LABEL[s]?.label ?? s)}
@@ -224,7 +226,7 @@ export default function FinancePage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                   filterMode === m.key
                     ? "bg-[var(--primary)] text-white"
-                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:bg-[var(--surface-hover)]"
+                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 {m.label}
@@ -233,51 +235,36 @@ export default function FinancePage() {
           </div>
         </div>
 
-        {/* Baris 2: Input filter tanggal (kondisional) */}
         {filterMode === "month" && (
           <div className="flex items-center gap-3">
-            <label className="text-sm text-[var(--muted)] font-medium shrink-0">
-              Pilih Bulan:
-            </label>
+            <label className="text-sm text-[var(--muted)] font-medium shrink-0">Pilih Bulan:</label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
               className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             >
-              {MONTHS.map((m, i) => (
-                <option key={i} value={i}>
-                  {m}
-                </option>
-              ))}
+              {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
             </select>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             >
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
+              {years.map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         )}
 
         {filterMode === "range" && (
           <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-sm text-[var(--muted)] font-medium shrink-0">
-              Dari:
-            </label>
+            <label className="text-sm text-[var(--muted)] font-medium shrink-0">Dari:</label>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
               className="px-3 py-2 rounded-lg border border-[var(--border)] text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
             />
-            <label className="text-sm text-[var(--muted)] font-medium shrink-0">
-              Sampai:
-            </label>
+            <label className="text-sm text-[var(--muted)] font-medium shrink-0">Sampai:</label>
             <input
               type="date"
               value={dateTo}
@@ -287,10 +274,7 @@ export default function FinancePage() {
             />
             {(dateFrom || dateTo) && (
               <button
-                onClick={() => {
-                  setDateFrom("");
-                  setDateTo("");
-                }}
+                onClick={() => { setDateFrom(""); setDateTo(""); }}
                 className="text-xs text-[var(--text-tertiary)] hover:text-[var(--muted)] transition"
               >
                 Reset
@@ -300,29 +284,36 @@ export default function FinancePage() {
         )}
       </div>
 
-      {/* Summary Card — tampil hanya kalau ada filter & ada data CLOSED */}
-      {filterMode !== "all" && closedShifts.length > 0 && (
+      {/* ── FIX #3: Summary card — selalu tampil jika ada data ──────────────── */}
+      {!loading && shifts.length > 0 && (
         <div className="bg-[var(--surface-accent)] border border-[var(--border)] rounded-xl p-5">
           <p className="text-[var(--text-tertiary)] text-xs font-medium mb-4 uppercase tracking-wide">
             Rekap {periodLabel()}
+            {totalRecords > shifts.length && (
+              <span className="ml-2 normal-case font-normal">
+                · menampilkan {shifts.length} dari {totalRecords} laporan
+              </span>
+            )}
           </p>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-[var(--text-tertiary)] text-xs">Total Shift Closed</p>
-              <p className="text-[var(--foreground)] text-2xl font-bold mt-1">
-                {closedShifts.length}
-              </p>
-            </div>
-            <div>
-              <p className="text-[var(--text-tertiary)] text-xs">Total Modal Awal</p>
-              <p className="text-[var(--foreground)] text-2xl font-bold mt-1">
-                {fmt(totalModalAwal)}
-              </p>
+              <p className="text-[var(--text-tertiary)] text-xs">Total Laporan</p>
+              <p className="text-[var(--foreground)] text-2xl font-bold mt-1">{totalRecords}</p>
             </div>
             <div>
               <p className="text-[var(--text-tertiary)] text-xs">Menunggu Finance</p>
-              <p className="text-amber-600 dark:text-amber-400 text-2xl font-bold mt-1">
-                {shifts.filter((s) => s.status === "PENDING_FINANCE").length}
+              <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-[var(--text-tertiary)]"}`}>
+                {pendingCount}
+              </p>
+            </div>
+            <div>
+              <p className="text-[var(--text-tertiary)] text-xs">Closed di Halaman Ini</p>
+              <p className="text-emerald-600 text-2xl font-bold mt-1">{closedCount}</p>
+            </div>
+            <div>
+              <p className="text-[var(--text-tertiary)] text-xs">Total Modal Awal (Closed)</p>
+              <p className="text-[var(--foreground)] text-xl font-bold mt-1">
+                {totalModalAwalClosed > 0 ? fmt(totalModalAwalClosed) : "—"}
               </p>
             </div>
           </div>
@@ -337,107 +328,207 @@ export default function FinancePage() {
           <div className="p-8 text-center">
             <p className="text-[var(--text-tertiary)] text-sm">Tidak ada laporan</p>
             {filterMode !== "all" && (
-              <p className="text-xs mt-1" style={{color:"var(--text-tertiary)"}}>
+              <p className="text-xs mt-1 text-[var(--text-tertiary)]">
                 Coba ubah filter periode atau status
               </p>
             )}
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
-                  Tanggal
-                </th>
-                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
-                  Kasir
-                </th>
-                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
-                  Jam Buka
-                </th>
-                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
-                  Modal Awal
-                </th>
-                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
-                  Status
-                </th>
-                <th className="text-left px-4 py-3 font-medium uppercase tracking-wide" style={{color:"var(--text-tertiary)",fontSize:"11px"}}>
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {shifts.map((shift) => {
-                const status = STATUS_LABEL[shift.status];
-                const isPendingFinance = shift.status === "PENDING_FINANCE";
-                const isClosed = shift.status === "CLOSED";
-                return (
-                  <tr
-                    key={shift.id}
-                    className="border-b border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
-                  >
-                    <td className="px-4 py-3 font-medium text-[var(--foreground)]">
-                      {new Date(shift.shift_date).toLocaleDateString("id-ID", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--muted)]">
-                      {shift.opener?.full_name}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--muted)]">
-                      {new Date(shift.opened_at).toLocaleTimeString("id-ID", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className="px-4 py-3 text-[var(--muted)]">
-                      Rp {parseInt(shift.modal_awal).toLocaleString("id-ID")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${status?.color}`}
-                      >
-                        {status?.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => router.push(`/shifts/${shift.id}`)}
-                          className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+          <>
+            <table className="w-full text-sm">
+              <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
+                <tr>
+                  {/* ── FIX #1: tambah kolom Periode ── */}
+                  {["Tanggal", "Periode", "Kasir", "Jam Buka", "Modal Awal", "Status", "Aksi"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left px-4 py-3 font-medium uppercase tracking-wide"
+                      style={{ color: "var(--text-tertiary)", fontSize: "11px" }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                  {/* ── FIX #4: kolom "Menunggu Sejak" hanya saat filter PENDING_FINANCE ── */}
+                  {statusFilter === "PENDING_FINANCE" && (
+                    <th
+                      className="text-left px-4 py-3 font-medium uppercase tracking-wide"
+                      style={{ color: "var(--text-tertiary)", fontSize: "11px" }}
+                    >
+                      Menunggu
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {shifts.map((shift) => {
+                  const status = STATUS_LABEL[shift.status];
+                  const isPendingFinance = shift.status === "PENDING_FINANCE";
+                  const isClosed = shift.status === "CLOSED";
+                  const periodInfo = SHIFT_PERIOD_LABEL[shift.shift_period];
+
+                  return (
+                    <tr
+                      key={shift.id}
+                      className="border-b border-[var(--border)] hover:bg-[var(--surface-hover)] transition"
+                    >
+                      <td className="px-4 py-3 font-medium text-[var(--foreground)]">
+                        {new Date(shift.shift_date).toLocaleDateString("id-ID", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+
+                      {/* ── FIX #1: kolom Periode ── */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            periodInfo?.color ?? "bg-[var(--surface-hover)] text-[var(--muted)]"
+                          }`}
                         >
-                          Detail
+                          {periodInfo?.label ?? shift.shift_period}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3 text-[var(--muted)]">
+                        {shift.opener?.full_name}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--muted)]">
+                        {new Date(shift.opened_at).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="px-4 py-3 text-[var(--muted)]">
+                        Rp {parseInt(shift.modal_awal).toLocaleString("id-ID")}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${status?.color}`}
+                        >
+                          {status?.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => router.push(`/shifts/${shift.id}`)}
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            Detail
+                          </button>
+                          {isPendingFinance && (
+                            <button
+                              onClick={() => {
+                                setActionShift(shift);
+                                setCatatan("");
+                                setError("");
+                              }}
+                              className="bg-[var(--surface-accent)] hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium px-3 py-1.5 rounded-lg transition"
+                            >
+                              Close & PDF
+                            </button>
+                          )}
+                          {isClosed && (
+                            <button
+                              onClick={() => openPDF(shift.id)}
+                              className="bg-[var(--surface-hover)] text-[var(--foreground)] text-xs font-medium px-3 py-1.5 rounded-lg transition hover:bg-[var(--border)]"
+                            >
+                              Lihat PDF
+                            </button>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* ── FIX #4: kolom Menunggu Sejak ── */}
+                      {statusFilter === "PENDING_FINANCE" && (
+                        <td className="px-4 py-3">
+                          {isPendingFinance
+                            ? <AgingBadge openedAt={shift.opened_at} />
+                            : <span className="text-[var(--border)]">—</span>
+                          }
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* ── FIX #2: Pagination ─────────────────────────────────────── */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)] bg-[var(--surface-hover)]">
+                <p className="text-xs text-[var(--text-tertiary)]">
+                  Halaman {currentPage} dari {totalPages} · {totalRecords} laporan total
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="px-2 py-1.5 rounded text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface)] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface)] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    ← Prev
+                  </button>
+
+                  {/* Nomor halaman — tampilkan max 5 halaman di sekitar halaman aktif */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(
+                      (p) =>
+                        p === 1 ||
+                        p === totalPages ||
+                        Math.abs(p - currentPage) <= 1,
+                    )
+                    .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === "..." ? (
+                        <span key={`ellipsis-${idx}`} className="px-2 text-xs text-[var(--border)]">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={item}
+                          onClick={() => setCurrentPage(item as number)}
+                          className={`w-7 h-7 rounded text-xs font-medium transition ${
+                            currentPage === item
+                              ? "bg-blue-600 text-white"
+                              : "text-[var(--muted)] hover:bg-[var(--surface)]"
+                          }`}
+                        >
+                          {item}
                         </button>
-                        {isPendingFinance && (
-                          <button
-                            onClick={() => {
-                              setActionShift(shift);
-                              setCatatan("");
-                              setError("");
-                            }}
-                            className="bg-[var(--surface-accent)] hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium px-3 py-1.5 rounded-lg transition"
-                          >
-                            Close & PDF
-                          </button>
-                        )}
-                        {isClosed && (
-                          <button
-                            onClick={() => openPDF(shift.id)}
-                            className="bg-[var(--surface-hover)] hover:bg-[var(--surface-hover)] text-[var(--foreground)] text-xs font-medium px-3 py-1.5 rounded-lg transition"
-                          >
-                            Lihat PDF
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      ),
+                    )}
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface)] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    Next →
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="px-2 py-1.5 rounded text-xs font-medium text-[var(--muted)] hover:bg-[var(--surface)] disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -448,13 +539,28 @@ export default function FinancePage() {
             <h2 className="text-lg font-bold text-[var(--foreground)]">
               Tutup & Generate Laporan
             </h2>
-            <p className="text-sm text-[var(--muted)]">
-              Shift:
-              <span className="font-medium text-[var(--foreground)]">
-                {actionShift.opener?.full_name}
-              </span>
-              — {new Date(actionShift.shift_date).toLocaleDateString("id-ID")}
-            </p>
+            <div className="text-sm text-[var(--muted)] space-y-1">
+              <p>
+                Kasir:{" "}
+                <span className="font-medium text-[var(--foreground)]">
+                  {actionShift.opener?.full_name}
+                </span>
+              </p>
+              <p>
+                Tanggal:{" "}
+                <span className="font-medium text-[var(--foreground)]">
+                  {new Date(actionShift.shift_date).toLocaleDateString("id-ID", {
+                    weekday: "long", day: "numeric", month: "long", year: "numeric",
+                  })}
+                </span>
+              </p>
+              <p>
+                Periode:{" "}
+                <span className="font-medium text-[var(--foreground)]">
+                  {SHIFT_PERIOD_LABEL[actionShift.shift_period]?.label ?? actionShift.shift_period}
+                </span>
+              </p>
+            </div>
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -463,8 +569,7 @@ export default function FinancePage() {
             )}
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
-              Setelah ditutup, laporan tidak dapat diubah dan PDF akan otomatis
-              tersedia.
+              Setelah ditutup, laporan tidak dapat diubah dan PDF akan otomatis tersedia.
             </div>
 
             <div className="space-y-1.5">

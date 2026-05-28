@@ -886,11 +886,17 @@ export default function ShiftDetailPage() {
       </div>
 
       {/* Info card */}
-      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 grid grid-cols-3 gap-4 text-sm">
+      <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
         <div>
           <p className="text-[var(--text-tertiary)]">Kasir</p>
           <p className="font-medium text-[var(--foreground)] mt-0.5">
             {shift?.opener?.full_name}
+          </p>
+        </div>
+        <div>
+          <p className="text-[var(--text-tertiary)]">Periode</p>
+          <p className="font-medium text-[var(--foreground)] mt-0.5">
+            {shift?.shift_period === "SHIFT_1" ? "Shift 1 — Pagi" : "Shift 2 — Siang"}
           </p>
         </div>
         <div>
@@ -963,21 +969,49 @@ export default function ShiftDetailPage() {
       {/* Tab panel — hanya saat OPEN dan hanya untuk pemilik shift */}
       {!isClosed && !isPending && isOwner && (
         <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] overflow-hidden">
-          {/* Tab nav */}
-          <div className="flex border-b border-[var(--border)]">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === tab.key
-                    ? "text-blue-600 border-b-2 border-blue-600 bg-[var(--surface-accent)]"
-                    : "text-[var(--muted)] hover:text-[var(--text-secondary)]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Step indicator */}
+          <div className="flex items-center border-b border-[var(--border)] px-4 py-3 gap-1 overflow-x-auto">
+            {tabs.map((tab, i) => {
+              const tabOrder: Tab[] = ["esb", "fisik", "special", "submit"];
+              const activeIdx = tabOrder.indexOf(activeTab);
+              const thisIdx = tabOrder.indexOf(tab.key);
+              const isActive = activeTab === tab.key;
+              const isDone = thisIdx < activeIdx;
+              const isUpcoming = thisIdx > activeIdx;
+
+              return (
+                <div key={tab.key} className="flex items-center min-w-0">
+                  <button
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all shrink-0 ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : isDone
+                        ? "text-emerald-700 hover:bg-emerald-50"
+                        : "text-[var(--muted)] hover:text-[var(--text-secondary)]"
+                    }`}
+                  >
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : isDone
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-[var(--surface-hover)] text-[var(--text-tertiary)]"
+                    }`}>
+                      {isDone ? "✓" : i + 1}
+                    </span>
+                    <span className={`hidden sm:inline ${isUpcoming ? "opacity-50" : ""}`}>
+                      {tab.label.replace(/^\d+\. /, "")}
+                    </span>
+                  </button>
+                  {i < tabs.length - 1 && (
+                    <span className={`mx-1 text-xs shrink-0 ${isDone ? "text-emerald-400" : "text-[var(--border)]"}`}>
+                      —
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="p-6">
