@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { STATUS_LABEL, SHIFT_PERIOD_LABEL } from "@/utils/format";
 import { SkeletonListPage } from "@/components/ui/LoadingSkeleton";
 
-// Daftar bulan untuk quick picker
 const MONTHS = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
@@ -16,14 +15,16 @@ function fmt(n: number) {
   return `Rp ${n.toLocaleString("id-ID")}`;
 }
 
-// ── Hitung selisih hari dari opened_at ke sekarang ────────────────────────────
-function agingDays(openedAt: string): number {
-  const diff = Date.now() - new Date(openedAt).getTime();
+// Aging dihitung dari pending_finance_at — waktu shift masuk antrian Finance
+// (disetujui Head Cashier), bukan dari waktu kasir membuka shift
+function agingDays(pendingFinanceAt: string): number {
+  const diff = Date.now() - new Date(pendingFinanceAt).getTime();
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function AgingBadge({ openedAt }: { openedAt: string }) {
-  const days = agingDays(openedAt);
+function AgingBadge({ pendingFinanceAt }: { pendingFinanceAt: string | null }) {
+  if (!pendingFinanceAt) return <span className="text-xs text-[var(--text-tertiary)]">—</span>;
+  const days = agingDays(pendingFinanceAt);
   if (days === 0) {
     return <span className="text-xs text-[var(--text-tertiary)]">Hari ini</span>;
   }
@@ -50,12 +51,17 @@ export default function FinancePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  // Filter tanggal
+  // Summary dari server — dihitung dari keseluruhan data, bukan hanya halaman ini
+  const [summary, setSummary] = useState({
+    pending_finance_count: 0,
+    closed_count: 0,
+    total_modal_awal_closed: 0,
+  });
+
   const now = new Date();
   const [filterMode, setFilterMode] = useState<"all" | "month" | "range">("all");
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -63,7 +69,6 @@ export default function FinancePage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // Reset halaman saat filter berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, filterMode, selectedMonth, selectedYear, dateFrom, dateTo]);
@@ -95,6 +100,7 @@ export default function FinancePage() {
         setShifts(data.data ?? []);
         setTotalPages(data.meta?.total_pages ?? 1);
         setTotalRecords(data.meta?.total ?? 0);
+        if (data.summary) setSummary(data.summary);
       })
       .catch((msg) => {
         setError(typeof msg === "string" ? msg : "Terjadi kesalahan jaringan.");
@@ -166,13 +172,6 @@ export default function FinancePage() {
 
   const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
 
-  // Summary: hitung dari data halaman ini (selalu ditampilkan)
-  const pendingCount = shifts.filter((s) => s.status === "PENDING_FINANCE").length;
-  const closedCount = shifts.filter((s) => s.status === "CLOSED").length;
-  const totalModalAwalClosed = shifts
-    .filter((s) => s.status === "CLOSED")
-    .reduce((sum, s) => sum + parseInt(s.modal_awal ?? "0"), 0);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -192,7 +191,6 @@ export default function FinancePage() {
       {/* Filter Bar */}
       <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          {/* Status filter */}
           <div className="flex gap-2">
             {["PENDING_FINANCE", "CLOSED", ""].map((s) => (
               <button
@@ -211,7 +209,6 @@ export default function FinancePage() {
 
           <div className="w-px h-5 bg-[var(--border)]" />
 
-          {/* Mode filter tanggal */}
           <div className="flex gap-2">
             {(
               [
@@ -284,7 +281,7 @@ export default function FinancePage() {
         )}
       </div>
 
-      {/* ── FIX #3: Summary card — selalu tampil jika ada data ──────────────── */}
+      {/* Summary Card */}
       {!loading && shifts.length > 0 && (
         <div className="bg-[var(--surface-accent)] border border-[var(--border)] rounded-xl p-5">
           <p className="text-[var(--text-tertiary)] text-xs font-medium mb-4 uppercase tracking-wide">
@@ -302,18 +299,20 @@ export default function FinancePage() {
             </div>
             <div>
               <p className="text-[var(--text-tertiary)] text-xs">Menunggu Finance</p>
-              <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-[var(--text-tertiary)]"}`}>
-                {pendingCount}
+              <p className={`text-2xl font-bold mt-1 ${summary.pending_finance_count > 0 ? "text-amber-600 dark:text-amber-400" : "text-[var(--text-tertiary)]"}`}>
+                {summary.pending_finance_count}
               </p>
             </div>
             <div>
-              <p className="text-[var(--text-tertiary)] text-xs">Closed di Halaman Ini</p>
-              <p className="text-emerald-600 text-2xl font-bold mt-1">{closedCount}</p>
+              <p className="text-[var(--text-tertiary)] text-xs">Total Closed</p>
+              <p className="text-emerald-600 text-2xl font-bold mt-1">{summary.closed_count}</p>
             </div>
             <div>
               <p className="text-[var(--text-tertiary)] text-xs">Total Modal Awal (Closed)</p>
               <p className="text-[var(--foreground)] text-xl font-bold mt-1">
-                {totalModalAwalClosed > 0 ? fmt(totalModalAwalClosed) : "—"}
+                {summary.total_modal_awal_closed > 0
+                  ? fmt(Number(summary.total_modal_awal_closed))
+                  : "—"}
               </p>
             </div>
           </div>
@@ -338,7 +337,6 @@ export default function FinancePage() {
             <table className="w-full text-sm">
               <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)]">
                 <tr>
-                  {/* ── FIX #1: tambah kolom Periode ── */}
                   {["Tanggal", "Periode", "Kasir", "Jam Buka", "Modal Awal", "Status", "Aksi"].map((h) => (
                     <th
                       key={h}
@@ -348,7 +346,6 @@ export default function FinancePage() {
                       {h}
                     </th>
                   ))}
-                  {/* ── FIX #4: kolom "Menunggu Sejak" hanya saat filter PENDING_FINANCE ── */}
                   {statusFilter === "PENDING_FINANCE" && (
                     <th
                       className="text-left px-4 py-3 font-medium uppercase tracking-wide"
@@ -379,8 +376,6 @@ export default function FinancePage() {
                           year: "numeric",
                         })}
                       </td>
-
-                      {/* ── FIX #1: kolom Periode ── */}
                       <td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -390,7 +385,6 @@ export default function FinancePage() {
                           {periodInfo?.label ?? shift.shift_period}
                         </span>
                       </td>
-
                       <td className="px-4 py-3 text-[var(--muted)]">
                         {shift.opener?.full_name}
                       </td>
@@ -401,7 +395,7 @@ export default function FinancePage() {
                         })}
                       </td>
                       <td className="px-4 py-3 text-[var(--muted)]">
-                        Rp {parseInt(shift.modal_awal).toLocaleString("id-ID")}
+                        Rp {Number(shift.modal_awal).toLocaleString("id-ID")}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -440,12 +434,10 @@ export default function FinancePage() {
                           )}
                         </div>
                       </td>
-
-                      {/* ── FIX #4: kolom Menunggu Sejak ── */}
                       {statusFilter === "PENDING_FINANCE" && (
                         <td className="px-4 py-3">
                           {isPendingFinance
-                            ? <AgingBadge openedAt={shift.opened_at} />
+                            ? <AgingBadge pendingFinanceAt={shift.pending_finance_at ?? null} />
                             : <span className="text-[var(--border)]">—</span>
                           }
                         </td>
@@ -456,7 +448,6 @@ export default function FinancePage() {
               </tbody>
             </table>
 
-            {/* ── FIX #2: Pagination ─────────────────────────────────────── */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border)] bg-[var(--surface-hover)]">
                 <p className="text-xs text-[var(--text-tertiary)]">
@@ -477,8 +468,6 @@ export default function FinancePage() {
                   >
                     ← Prev
                   </button>
-
-                  {/* Nomor halaman — tampilkan max 5 halaman di sekitar halaman aktif */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(
                       (p) =>
@@ -510,7 +499,6 @@ export default function FinancePage() {
                         </button>
                       ),
                     )}
-
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}

@@ -34,6 +34,7 @@ model ShiftReport {
   opened_by         String
   opened_at         DateTime              @default(now())
   closed_at         DateTime?
+  pending_finance_at DateTime?
   modal_awal        Decimal               @default(1000000) @db.Decimal(15, 2)
   status            ShiftStatus           @default(OPEN)
   shift_period      ShiftPeriod           @default(SHIFT_1)

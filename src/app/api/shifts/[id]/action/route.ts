@@ -1,276 +1,229 @@
-// src/app/api/shifts/[id]/action/route.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireRole } from '@/lib/session'
-import { Role, NotifType } from '@prisma/client'
-import { calculateReconciliation } from '@/lib/calculations'
-import { createNotification, notifyByRole } from '@/lib/notifications'
-import { z } from 'zod'
+// src/app/api/shifts/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/session";
+import { Role, ShiftPeriod, ShiftStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
+import { generateShiftId } from "@/utils/format";
+import { getTodayWIB } from "@/utils/date";
 
-const ActionSchema = z.object({
-  action: z.enum(['SUBMIT', 'APPROVE', 'REJECT', 'CLOSE']),
-  catatan: z.string().max(500).optional(),
-  variance_note: z.string().max(500).optional(),
-})
+const OpenShiftSchema = z.object({
+  modal_awal: z.number().positive().default(1_000_000),
+  shift_period: z.nativeEnum(ShiftPeriod).default(ShiftPeriod.SHIFT_1),
+});
 
-// ─── POST /api/shifts/:id/action ──────────────────────────────────────────────
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params
+// ─── GET /api/shifts ──────────────────────────────────────────────────────────
+// CASHIER: lihat shift milik sendiri
+// HEAD_CASHIER: lihat semua shift (untuk review)
+// FINANCE: lihat semua shift (untuk finalisasi & penutupan)
+export async function GET(req: NextRequest) {
   const { session, error } = await requireRole(
     Role.CASHIER,
     Role.HEAD_CASHIER,
     Role.FINANCE,
-  )
-  if (error) return error
+  );
+  if (error) return error;
 
-  const body = await req.json()
-  const parsed = ActionSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Data yang dikirim tidak lengkap atau tidak sesuai. Muat ulang halaman dan coba lagi.' },
-      { status: 400 },
-    )
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+  const date = searchParams.get("date");
+  const from = searchParams.get("from");
+  const to = searchParams.get("to");
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
+  const limit = 20;
+
+  const where: Prisma.ShiftReportWhereInput = {};
+
+  // Cashier hanya lihat shift milik sendiri
+  // Head Cashier dan Finance lihat semua
+  if (session!.user.role === Role.CASHIER) {
+    where.opened_by = session!.user.id;
   }
 
-  const { action, catatan, variance_note } = parsed.data
-
-  const shift = await prisma.shiftReport.findUnique({
-    where: { id },
-    include: {
-      transaction_lines: true,
-      opener: { select: { id: true, full_name: true } },
-    },
-  })
-
-  if (!shift) {
-    return NextResponse.json({ error: 'Shift tidak ditemukan.' }, { status: 404 })
-  }
-
-  // ── SUBMIT (Cashier saja) ─────────────────────────────────────────────────
-  if (action === 'SUBMIT') {
-    if (session!.user.role !== Role.CASHIER) {
-      return NextResponse.json(
-        { error: 'Hanya Kasir yang bisa submit shift.' },
-        { status: 403 },
-      )
-    }
-    if (shift.opened_by !== session!.user.id) {
-      return NextResponse.json({ error: 'Kamu bukan pemilik shift ini.' }, { status: 403 })
-    }
-    if (shift.status !== 'OPEN') {
-      return NextResponse.json(
-        { error: `Shift berstatus ${shift.status}, tidak bisa di-submit.` },
-        { status: 422 },
-      )
-    }
-
-    const hasESB = shift.transaction_lines.some((l) => l.sumber === 'ESB')
-    const hasFisik = shift.transaction_lines.some((l) => l.sumber === 'FISIK')
-    if (!hasESB || !hasFisik) {
-      return NextResponse.json(
-        { error: 'Data ESB dan Data Fisik wajib diisi sebelum submit.' },
-        { status: 422 },
-      )
-    }
-
-    const recon = calculateReconciliation(shift.transaction_lines)
-    if (recon.is_variance_exceeded && !variance_note?.trim()) {
+  if (status) {
+    if (!Object.values(ShiftStatus).includes(status as ShiftStatus)) {
       return NextResponse.json(
         {
-          error: `Selisih minus melebihi Rp 50.000 (${recon.total_selisih.toFixed(0)}). Wajib isi keterangan selisih.`,
-          code: 'VARIANCE_NOTE_REQUIRED',
+          error: `Status tidak valid. Nilai yang diizinkan: ${Object.values(ShiftStatus).join(", ")}.`,
         },
-        { status: 422 },
-      )
+        { status: 400 },
+      );
     }
-
-    const updated = await prisma.$transaction(async (tx) => {
-      const upd = await tx.shiftReport.update({
-        where: { id },
-        data: {
-          status: 'PENDING',
-          variance_note: variance_note?.trim() ?? null,
-        },
-      })
-      await tx.approval.create({
-        data: {
-          shift_id: id,
-          approver_id: session!.user.id,
-          action: 'APPROVE',
-          catatan: 'Kasir submit laporan',
-        },
-      })
-      // Notifikasi ke semua Head Cashier aktif
-      await notifyByRole(tx, {
-        role: Role.HEAD_CASHIER,
-        type: NotifType.SHIFT_PENDING_REVIEW,
-        shift_id: id,
-        message: `Shift ${id} dari ${shift.opener.full_name} menunggu review kamu.`,
-      })
-      return upd
-    })
-
-    return NextResponse.json({ data: updated, message: 'Laporan berhasil di-submit.' })
+    where.status = status as ShiftStatus;
   }
 
-  // ── APPROVE (Head Cashier) ────────────────────────────────────────────────
-  if (action === 'APPROVE') {
-    if (session!.user.role !== Role.HEAD_CASHIER) {
-      return NextResponse.json(
-        { error: 'Hanya Head Cashier yang bisa approve.' },
-        { status: 403 },
-      )
+  if (date) {
+    const start = new Date(date);
+    const end = new Date(date);
+    end.setDate(end.getDate() + 1);
+    where.shift_date = { gte: start, lt: end };
+  } else if (from || to) {
+    const dateFilter: { gte?: Date; lt?: Date } = {};
+    if (from) dateFilter.gte = new Date(from);
+    if (to) {
+      const toDate = new Date(to);
+      toDate.setDate(toDate.getDate() + 1);
+      dateFilter.lt = toDate;
     }
-    if (shift.opened_by === session!.user.id) {
-      return NextResponse.json(
-        { error: 'Kamu tidak bisa approve shift milikmu sendiri.' },
-        { status: 403 },
-      )
-    }
-    if (shift.status !== 'PENDING') {
-      return NextResponse.json(
-        { error: `Shift berstatus ${shift.status}, tidak bisa di-approve.` },
-        { status: 422 },
-      )
-    }
-
-    const updated = await prisma.$transaction(async (tx) => {
-      const upd = await tx.shiftReport.update({
-        where: { id },
-        data: { status: 'PENDING_FINANCE' },
-      })
-      await tx.approval.create({
-        data: {
-          shift_id: id,
-          approver_id: session!.user.id,
-          action: 'APPROVE',
-          catatan: catatan ?? null,
-        },
-      })
-      // Notifikasi ke kasir pemilik shift
-      await createNotification(tx, {
-        user_id: shift.opened_by,
-        type: NotifType.SHIFT_APPROVED,
-        shift_id: id,
-        message: `Shift ${id} kamu telah disetujui oleh Head Kasir. Menunggu konfirmasi Finance.`,
-      })
-      // Notifikasi ke Finance
-      await notifyByRole(tx, {
-        role: Role.FINANCE,
-        type: NotifType.SHIFT_PENDING_REVIEW,
-        shift_id: id,
-        message: `Shift ${id} dari ${shift.opener.full_name} sudah disetujui Head Kasir dan menunggu penutupan Finance.`,
-      })
-      return upd
-    })
-
-    return NextResponse.json({ data: updated, message: 'Laporan berhasil di-approve.' })
+    where.shift_date = dateFilter;
   }
 
-  // ── REJECT (Head Cashier) ─────────────────────────────────────────────────
-  if (action === 'REJECT') {
-    if (session!.user.role !== Role.HEAD_CASHIER) {
-      return NextResponse.json(
-        { error: 'Hanya Head Cashier yang bisa reject.' },
-        { status: 403 },
-      )
-    }
-    if (shift.opened_by === session!.user.id) {
-      return NextResponse.json(
-        { error: 'Kamu tidak bisa reject shift milikmu sendiri.' },
-        { status: 403 },
-      )
-    }
-    if (shift.status !== 'PENDING') {
-      return NextResponse.json(
-        { error: `Shift berstatus ${shift.status}, tidak bisa di-reject.` },
-        { status: 422 },
-      )
-    }
-    if (!catatan || catatan.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Alasan reject wajib diisi agar kasir mengetahui kesalahannya.' },
-        { status: 422 },
-      )
-    }
+  const [total, shifts, summaryAgg] = await prisma.$transaction([
+    prisma.shiftReport.count({ where }),
+    prisma.shiftReport.findMany({
+      where,
+      include: {
+        opener: { select: { id: true, full_name: true, username: true } },
+      },
+      orderBy: { opened_at: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    // Aggregate untuk summary card — dihitung dari keseluruhan filter, bukan hanya halaman ini
+    prisma.shiftReport.groupBy({
+      by: ["status"],
+      where,
+      _count: { _all: true },
+      _sum: { modal_awal: true },
+    }),
+  ]);
 
-    const updated = await prisma.$transaction(async (tx) => {
-      const upd = await tx.shiftReport.update({
-        where: { id },
-        data: { status: 'OPEN' },
-      })
-      await tx.approval.create({
-        data: {
-          shift_id: id,
-          approver_id: session!.user.id,
-          action: 'REJECT',
-          catatan,
-        },
-      })
-      // Notifikasi reject ke kasir — sertakan alasan langsung di message
-      await createNotification(tx, {
-        user_id: shift.opened_by,
-        type: NotifType.SHIFT_REJECTED,
-        shift_id: id,
-        message: `Shift ${id} kamu ditolak. Alasan: ${catatan.trim()}`,
-      })
-      return upd
-    })
+  // Susun summary dari groupBy result
+  const summaryByStatus = Object.fromEntries(
+    summaryAgg.map((s) => [
+      s.status,
+      { count: s._count._all, total_modal_awal: s._sum.modal_awal ?? 0 },
+    ]),
+  );
 
-    return NextResponse.json({
-      data: updated,
-      message: 'Laporan ditolak. Kasir dapat melakukan perbaikan dan submit ulang.',
-    })
+  const summary = {
+    pending_finance_count: summaryByStatus["PENDING_FINANCE"]?.count ?? 0,
+    closed_count: summaryByStatus["CLOSED"]?.count ?? 0,
+    total_modal_awal_closed: summaryByStatus["CLOSED"]?.total_modal_awal ?? 0,
+  };
+
+  return NextResponse.json({
+    data: shifts,
+    meta: { total, page, limit, total_pages: Math.ceil(total / limit) },
+    summary,
+  });
+}
+
+// ─── POST /api/shifts ─────────────────────────────────────────────────────────
+// Hanya CASHIER yang bisa buka shift — HEAD_CASHIER hanya review
+export async function POST(req: NextRequest) {
+  const { session, error } = await requireRole(Role.CASHIER);
+  if (error) return error;
+
+  const body = await req.json();
+  const parsed = OpenShiftSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Input tidak valid", details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
-  // ── CLOSE (Finance) ───────────────────────────────────────────────────────
-  if (action === 'CLOSE') {
-    if (session!.user.role !== Role.FINANCE) {
-      return NextResponse.json(
-        { error: 'Hanya Finance yang bisa menutup laporan.' },
-        { status: 403 },
-      )
-    }
-    if (shift.status !== 'PENDING_FINANCE') {
-      return NextResponse.json(
-        { error: `Shift berstatus ${shift.status}, tidak bisa di-close.` },
-        { status: 422 },
-      )
-    }
+  const { modal_awal, shift_period } = parsed.data;
 
-    const now = new Date()
-    const updated = await prisma.$transaction(async (tx) => {
-      const upd = await tx.shiftReport.update({
-        where: { id },
-        data: { status: 'CLOSED', closed_at: now },
-      })
-      await tx.approval.create({
-        data: {
-          shift_id: id,
-          approver_id: session!.user.id,
-          action: 'CLOSE',
-          catatan: catatan ?? null,
-          timestamp: now,
-        },
-      })
-      // Notifikasi ke kasir pemilik shift
-      await createNotification(tx, {
-        user_id: shift.opened_by,
-        type: NotifType.SHIFT_CLOSED,
-        shift_id: id,
-        message: `Shift ${id} kamu telah resmi ditutup oleh Finance. PDF laporan sudah tersedia.`,
-      })
-      return upd
-    })
+  const now = new Date();
+  const todayDate = getTodayWIB();
 
-    return NextResponse.json({
-      data: updated,
-      message: 'Laporan berhasil ditutup. PDF dapat di-generate.',
-    })
+  const activeShift = await prisma.shiftReport.findFirst({
+    where: {
+      opened_by: session!.user.id,
+      status: { in: [ShiftStatus.OPEN, ShiftStatus.PENDING] },
+      shift_date: todayDate,
+    },
+  });
+  if (activeShift) {
+    return NextResponse.json(
+      {
+        error:
+          "Kamu masih memiliki shift aktif hari ini. Selesaikan shift sebelumnya terlebih dahulu.",
+      },
+      { status: 409 },
+    );
   }
 
-  return NextResponse.json({ error: 'Action tidak dikenal.' }, { status: 400 })
+  if (shift_period === ShiftPeriod.SHIFT_2) {
+    const shift1Today = await prisma.shiftReport.findFirst({
+      where: { shift_date: todayDate, shift_period: ShiftPeriod.SHIFT_1 },
+    });
+
+    if (!shift1Today) {
+      return NextResponse.json(
+        {
+          error:
+            "Shift 1 hari ini belum dibuka. Shift 2 hanya bisa dibuka setelah Shift 1 ada.",
+        },
+        { status: 422 },
+      );
+    }
+
+    const shift1Ready =
+      shift1Today.status === ShiftStatus.PENDING ||
+      shift1Today.status === ShiftStatus.PENDING_FINANCE ||
+      shift1Today.status === ShiftStatus.CLOSED;
+
+    if (!shift1Ready) {
+      return NextResponse.json(
+        {
+          error:
+            "Shift 1 hari ini masih berjalan. " +
+            "Shift 2 bisa dibuka setelah kasir Shift 1 menyelesaikan dan mengajukan laporannya.",
+        },
+        { status: 422 },
+      );
+    }
+
+    if (shift1Today.opened_by === session!.user.id) {
+      return NextResponse.json(
+        {
+          error:
+            "Kamu tidak bisa membuka Shift 2 karena kamu adalah kasir Shift 1 hari ini.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const shift2Today = await prisma.shiftReport.findFirst({
+      where: { shift_date: todayDate, shift_period: ShiftPeriod.SHIFT_2 },
+    });
+    if (shift2Today) {
+      return NextResponse.json(
+        { error: "Shift 2 hari ini sudah dibuka oleh kasir lain." },
+        { status: 409 },
+      );
+    }
+  }
+
+  const shift = await prisma.$transaction(
+    async (tx) => {
+      const existingCount = await tx.shiftReport.count({
+        where: { shift_date: todayDate, shift_period },
+      });
+      const seq = existingCount + 1;
+      const shiftId = generateShiftId(todayDate, shift_period, seq);
+
+      return tx.shiftReport.create({
+        data: {
+          id: shiftId,
+          shift_date: todayDate,
+          opened_by: session!.user.id,
+          opened_at: now,
+          modal_awal,
+          shift_period,
+          status: "OPEN",
+        },
+        include: {
+          opener: { select: { id: true, full_name: true, username: true } },
+        },
+      });
+    },
+    { isolationLevel: "Serializable" },
+  );
+
+  return NextResponse.json({ data: shift }, { status: 201 });
 }

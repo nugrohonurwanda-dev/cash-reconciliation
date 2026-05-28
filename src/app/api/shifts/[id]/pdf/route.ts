@@ -1,6 +1,4 @@
 // src/app/api/shifts/[id]/pdf/route.ts
-// Hanya Finance yang bisa generate PDF
-// Tanda tangan Head Cashier: ambil APPROVE terakhir (bukan REJECT)
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
@@ -34,7 +32,6 @@ function generatePDFInChildProcess(data: object): Promise<Buffer> {
 
     child.on('error', reject)
 
-    // Timeout 30 detik
     const timeout = setTimeout(() => {
       child.kill()
       reject(new Error('PDF generation timeout (30s)'))
@@ -56,8 +53,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    // PDF hanya untuk Finance
-    const { error } = await requireRole(Role.FINANCE)
+    // Finance bisa akses semua PDF; Cashier hanya milik sendiri
+    const { session, error } = await requireRole(Role.FINANCE, Role.CASHIER)
     if (error) return error
 
     const shift = await prisma.shiftReport.findUnique({
@@ -85,24 +82,30 @@ export async function GET(
       )
     }
 
+    // Cashier hanya boleh akses PDF shift miliknya sendiri
+    if (
+      session!.user.role === Role.CASHIER &&
+      shift.opened_by !== session!.user.id
+    ) {
+      return NextResponse.json(
+        { error: 'Kamu tidak berhak mengakses PDF shift ini.' },
+        { status: 403 },
+      )
+    }
+
     const recon = calculateReconciliation(shift.transaction_lines)
     const salesBreakdown = calculateSalesBreakdown(shift.transaction_lines, shift.special_logs)
 
-    // Tanda tangan Head Cashier: APPROVE terakhir (bukan REJECT, bukan submit kasir)
-    // Submit kasir juga tercatat sebagai APPROVE dengan catatan "Kasir submit laporan"
-    // Filter: ambil APPROVE dari user dengan role HEAD_CASHIER
     const headCashierApproval = shift.approvals
       .filter(
         (a) =>
           a.action === 'APPROVE' &&
           a.approver.role === 'HEAD_CASHIER',
       )
-      .at(-1) // yang paling akhir
+      .at(-1)
 
-    // Tanda tangan Finance: CLOSE
     const financeApproval = shift.approvals.find((a) => a.action === 'CLOSE')
 
-    // Akumulasi harian untuk Shift 2
     let dailyAccumulation = null
     if (shift.shift_period === ShiftPeriod.SHIFT_2) {
       const shift1 = await prisma.shiftReport.findFirst({

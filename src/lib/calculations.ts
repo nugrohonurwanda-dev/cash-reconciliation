@@ -16,7 +16,14 @@
 
 import { Decimal } from '@prisma/client/runtime/library'
 import { TransactionLine, PaymentCategory, SpecialLog, SpecialLogType } from '@prisma/client'
-import { SALES_CATEGORIES, NON_SALES_CATEGORIES, VARIANCE_THRESHOLD_IDR } from '@/lib/constants'
+import { SALES_CATEGORIES, VARIANCE_THRESHOLD_IDR } from '@/lib/constants'
+
+// Kategori deposit eksplisit — tidak bergantung pada NON_SALES_CATEGORIES
+// agar tetap akurat meski NON_SALES_CATEGORIES dikosongkan (deposit masuk omzet)
+const DEPOSIT_CATEGORIES: PaymentCategory[] = [
+  PaymentCategory.DEPOSIT_BANK,
+  PaymentCategory.DEPOSIT_CASH,
+]
 
 export const VARIANCE_THRESHOLD = new Decimal(VARIANCE_THRESHOLD_IDR)
 
@@ -30,47 +37,23 @@ export type CategorySummary = {
 }
 
 export type ShiftTotals = {
-  // Rekonsiliasi per kategori (semua 15 kategori)
   per_kategori: CategorySummary[]
-
-  // Total ESB semua kategori
   total_esb: Decimal
-
-  // Total Fisik semua kategori (termasuk deposit)
   total_fisik: Decimal
-
-  // Total selisih = total_fisik - total_esb
   total_selisih: Decimal
-
-  // Total Fisik hanya kategori sales (exclude deposit)
   total_fisik_sales: Decimal
-
-  // Total ESB hanya kategori sales
   total_esb_sales: Decimal
-
-  // Deposit terpisah (informatif, bukan sales)
   total_deposit_fisik: Decimal
   total_deposit_esb: Decimal
-
-  // Flag: selisih minus melebihi threshold → wajib keterangan
   is_variance_exceeded: boolean
 }
 
 export type SalesBreakdown = {
-  // Omzet kotor dari penjualan (fisik, exclude deposit)
   omzet_kotor: Decimal
-
-  // Pengurangan dari omzet
   total_void: Decimal
   total_discount: Decimal
-
-  // Omzet bersih = omzet_kotor - void - discount
   omzet_bersih: Decimal
-
-  // Other cost: pengeluaran operasional, TIDAK mengurangi omzet
   total_other_cost: Decimal
-
-  // Deposit: dicatat informatif; kini MASUK dalam omzet_kotor (total_fisik_sales)
   total_deposit: Decimal
 }
 
@@ -88,10 +71,6 @@ export type DailyAccumulation = {
 
 // ─── Core: Rekonsiliasi ───────────────────────────────────────────────────────
 
-/**
- * Hitung rekonsiliasi ESB vs Fisik dari transaction_lines satu shift.
- * Semua 15 kategori selalu ada di hasil, nilai 0 jika tidak ada data.
- */
 export function calculateReconciliation(lines: TransactionLine[]): ShiftTotals {
   const categories = Object.values(PaymentCategory)
 
@@ -111,16 +90,16 @@ export function calculateReconciliation(lines: TransactionLine[]): ShiftTotals {
   const total_fisik = per_kategori.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
   const total_selisih = total_fisik.minus(total_esb)
 
-  // Sales only (exclude deposit)
   const sales = per_kategori.filter((r) =>
     SALES_CATEGORIES.includes(r.kategori),
   )
   const total_fisik_sales = sales.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
   const total_esb_sales = sales.reduce((s, r) => s.plus(r.esb), new Decimal(0))
 
-  // Deposit totals
+  // Deposit totals — pakai DEPOSIT_CATEGORIES eksplisit, bukan NON_SALES_CATEGORIES
+  // (NON_SALES_CATEGORIES bisa kosong jika deposit sudah dihitung sebagai omzet)
   const deposits = per_kategori.filter((r) =>
-    NON_SALES_CATEGORIES.includes(r.kategori),
+    DEPOSIT_CATEGORIES.includes(r.kategori),
   )
   const total_deposit_fisik = deposits.reduce((s, r) => s.plus(r.fisik), new Decimal(0))
   const total_deposit_esb = deposits.reduce((s, r) => s.plus(r.esb), new Decimal(0))
@@ -142,15 +121,8 @@ export function calculateReconciliation(lines: TransactionLine[]): ShiftTotals {
   }
 }
 
-// ─── Sales Breakdown (untuk PDF dan Finance summary) ─────────────────────────
+// ─── Sales Breakdown ──────────────────────────────────────────────────────────
 
-/**
- * Hitung omzet bersih dan breakdown komponen sales dari satu shift.
- * Deposit (DEPOSIT_BANK / DEPOSIT_CASH) MASUK dalam omzet_kotor.
- *
- * other_cost TIDAK mengurangi omzet — ini adalah pengeluaran operasional
- * yang dicatat sebagai informasi terpisah (bukan deduction dari revenue).
- */
 export function calculateSalesBreakdown(
   lines: TransactionLine[],
   special_logs: SpecialLog[],
@@ -171,8 +143,6 @@ export function calculateSalesBreakdown(
 
   const omzet_kotor = recon.total_fisik_sales
   const omzet_bersih = omzet_kotor.minus(total_void).minus(total_discount)
-
-  // Total deposit (bank + cash) dari fisik
   const total_deposit = recon.total_deposit_fisik
 
   return {
@@ -187,10 +157,6 @@ export function calculateSalesBreakdown(
 
 // ─── Daily Accumulation (Shift 1 + Shift 2) ──────────────────────────────────
 
-/**
- * Gabungkan data dua shift dalam satu hari.
- * Dipakai di PDF Shift 2 untuk tampilkan total harian.
- */
 export function calculateDailyAccumulation(
   shift1Lines: TransactionLine[] | null,
   shift2Lines: TransactionLine[],
