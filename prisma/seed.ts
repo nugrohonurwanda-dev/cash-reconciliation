@@ -18,41 +18,41 @@ async function main() {
       password: 'Finance@123',
     },
     {
-      username: 'headcashier01',
+      username: 'headkasir01',
       full_name: 'Tari',
       role: Role.HEAD_CASHIER,
-      password: 'HeadCashier@123',
+      password: '88888888',
     },
 
     {
-      username: 'cashier01',
+      username: 'kasir01',
       full_name: 'Cellyna',
       role: Role.CASHIER,
-      password: 'Cashier@123',
+      password: 'kasir01',
     },
     {
-      username: 'cashier02',
+      username: 'kasir02',
       full_name: 'Inggit',
       role: Role.CASHIER,
-      password: 'Cashier@123',
+      password: 'kasir02',
     },
     {
-      username: 'cashier03',
+      username: 'kasir03',
       full_name: 'Novi',
       role: Role.CASHIER,
-      password: 'Cashier@123',
+      password: 'kasir03',
     },
     {
-      username: 'cashier04',
+      username: 'kasir04',
       full_name: 'Tanti',
       role: Role.CASHIER,
-      password: 'Cashier@123',
+      password: 'kasir04',
     },
     {
-      username: 'cashier05',
+      username: 'kasir05',
       full_name: 'Milla',
       role: Role.CASHIER,
-      password: 'Cashier@123',
+      password: 'kasir05',
     },
   ]
 
@@ -75,8 +75,8 @@ async function main() {
   console.log('\n✅ Seeding complete.')
   console.log('\nLogin credentials:')
   console.log('  Finance    : finance01       / Finance@123')
-  console.log('  Head Kasir : headcashier01   / HeadCashier@123')
-  console.log('  Kasir 1-5  : cashier01-05    / Cashier@123')
+  console.log('  Head Kasir : headkasir01   / 88888888')
+  console.log('  Kasir 1-5  : kasir01-05    / kasir01-kasir05')
 }
 
 main()
