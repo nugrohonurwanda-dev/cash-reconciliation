@@ -11,6 +11,7 @@ import {
   recordSuccessfulLogin,
 } from "@/lib/rate-limit";
 import { headers } from "next/headers";
+import { isProdLike } from "@/lib/env"; // ← gunakan helper, bukan process.env langsung
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -101,7 +102,7 @@ export const authOptions: NextAuthOptions = {
           return token;
         }
 
-        token.role = dbUser.role;
+        token.role = dbUser.role as Role;
         token.lastDbCheck = now;
       }
 
@@ -136,7 +137,9 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
+        // ✅ isProdLike() = true untuk staging DAN production
+        // Cookie secure aktif di staging sehingga bisa uji secara realistis
+        secure: isProdLike(),
       },
     },
   },
